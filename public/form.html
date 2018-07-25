@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <title>Title</title>
+</head>
+<body>
+
+    <form action="/pages" method="POST">
+
+        name:
+<input type="text" name="param"/>
+        <br/>
+
+        comment:
+        <br/>
+
+<textarea name="text"></textarea>
+        <br/>
+
+        <input type="submit" value="Add"/>
+
+
+
+    </form>
+
+
+</body>
+</html>
