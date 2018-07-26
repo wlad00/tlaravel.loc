@@ -11,6 +11,8 @@
 |
 */
 
+use Illuminate\Support\Facades\Auth;
+
 Route::get('/',
     [function () { return view('welcome');},
     'as'=>'root']
@@ -41,3 +43,5 @@ Route::get('/admin', 'AdminController@index')->name('admin');
     Route::get('/',['uses'=>'Admin\AdminController@show', 'as'=>'admin_index']);
     Route::get('/add/post',['uses'=>'Admin\AdminPostController@create', 'as'=>'admin_add_post']);
 });*/
+
+Route::get('send', 'mailController@send');
