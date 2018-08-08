@@ -33,9 +33,8 @@ Route::get('/about/{id}','FirstController@show');
 Auth::routes();
 
 Route::get('/home', 'HomeController@index')->name('home');
-
-Route::get('/admin', 'AdminController@index')->name('admin');
-
+//
+//Route::get('/admin', 'AdminController@index')->name('admin');
 
 // admin/edit/post
 /*Route::group(['prefix'=>'admin', 'middleware'=>['web','auth']],function(){
@@ -45,3 +44,46 @@ Route::get('/admin', 'AdminController@index')->name('admin');
 });*/
 
 Route::get('send', 'mailController@send');
+
+//admin
+Route::group(['middleware'=>'auth','prefix'=>'admin'],function(){
+
+    //admin
+    Route::get('/',['uses'=>'Admin\IndexController@index','as'=> 'adminIndex']);
+
+    Route::resource('/articles','Admin\ArticlesController');
+});
+
+//Route::get('/admin',['uses'=>'Admin\IndexController@index','as'=> 'adminIndex']);
+
+//Route::get('/admin',['uses'=>'Admin\IndexController@index','as'=> 'adminIndex']);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
