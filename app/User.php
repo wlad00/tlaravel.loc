@@ -35,4 +35,21 @@ class User extends Authenticatable
         return $this->belongsToMany('App\Role','role_user');
     }
 
+    public function canDo($permission, $require = FALSE){
+
+        if(is_array($permission)){
+            dump($permission);
+        }
+        else {
+            foreach ($this->roles as $role){
+                foreach ($role->perms as $perm){
+
+                    if(str_is($permission, $perm->name)){
+                        return TRUE;
+                    }
+                }
+            }
+        }
+    }
+
 }

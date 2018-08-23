@@ -11,7 +11,9 @@
 |
 */
 
+//use Illuminate\Auth\Access\Gate;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
 
 Route::get('/',
     [function () { return view('welcome');},
@@ -58,7 +60,17 @@ Route::group(['middleware'=>'auth','prefix'=>'admin'],function(){
 
 //Route::get('/admin',['uses'=>'Admin\IndexController@index','as'=> 'adminIndex']);
 
+Route::get('subs', function(){
 
+
+    if (Gate::allows('subs-only', Auth::user())) {
+
+            return view('subs');
+    }
+    else{
+        return 'You are not a subscriber';
+    }
+});
 
 
 
