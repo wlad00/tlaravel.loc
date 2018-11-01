@@ -15,10 +15,9 @@
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
 
-Route::get('/',
-    [function () { return view('welcome');},
-    'as'=>'root']
-);
+Route::get('/','IndexController@index')->name('index');
+Route::get('/home/{lang?}.html','IndexController@index')->name('index');
+
 
 Route::get('/about/{id}','FirstController@show');
 
