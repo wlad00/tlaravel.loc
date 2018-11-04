@@ -23,34 +23,55 @@
 
 
     <link data-require="font-awesome@4.3.0" data-semver="4.3.0" rel="stylesheet" href="//maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css" />
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css" />
+
+    {{--<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css" />--}}
     {{--<link rel="stylesheet" href="https://rawgit.com/fraywing/textAngular/master/dist/textAngular.css" />--}}
-    <link href="https://github.com/FortAwesome/Font-Awesome/blob/master/fonts/FontAwesome.otf" />
+    {{--<link href="https://github.com/FortAwesome/Font-Awesome/blob/master/fonts/FontAwesome.otf" />--}}
 
 </head>
-<body >
-<div class="container-fluid" ng-app="textAngularTest" ng-controller="testPen">
+<body>
+<div class="container-fluid" ng-app="myApp" ng-controller="testPen">
     <div class="row">
         <div >
-            <text-angular name="htmlcontent" ng-model="htmlcontent"
-                          ta-toolbar="editorToolbarButtonConfig"/>
+
+
+            <text-angular  ng-model="t0" ta-toolbar="myButtons">
+            </text-angular>
+
+
         </div>
     </div>
     <br>
-    <br>
+    Model = @{{ t0 }}
+
     <br>
     <br>
     <br>
 
-    Model = @{{ htmlcontent }}
+    <text-angular  ng-model="t1" ta-toolbar="myButtons">
+    </text-angular>
+    <br>
+
+    Model = @{{ t1 }}
+    <br>
+    <br>
+    <br>
+
+
+    <text-angular  ng-model="t2" ta-toolbar="myButtons">
+    </text-angular>
+
+    <br>
+
+    Model = @{{ t2 }}
+    <br>
 
 </div>
 
 
 
 
-
-
+</body>
 
 
 </body>
@@ -58,7 +79,6 @@
 <!-- Angular -->
 
 <script src="https://code.angularjs.org/1.3.17/angular.js" ></script>
-{{--<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.7.5/angular.min.js"></script>--}}
 
 <script src="js/ta.js"></script>
 
@@ -69,6 +89,4 @@
 <script src="https://rawgit.com/fraywing/textAngular/master/dist/textAngular.min.js"></script>
 
 
-
-<script src="js/textAngularSetup.js"></script>
 </html>
