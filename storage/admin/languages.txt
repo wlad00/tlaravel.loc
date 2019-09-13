@@ -1,0 +1,1 @@
+{"array_lang":["en","ru"],"admin_lang":["en","ru"]}

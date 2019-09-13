@@ -15,6 +15,16 @@
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
 
+
+/*Admin*/
+
+Route::prefix('admin')->group(function () {
+
+    Route::post('make_file', 'AdminController@makeFile')->name('admin.make_file');
+
+});
+
+
 Route::get('/','IndexController@index')->name('index');
 Route::get('/home/{lang?}.html','IndexController@index')->name('index');
 

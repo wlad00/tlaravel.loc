@@ -1,0 +1,12 @@
+
+
+{
+    "slide_options":[],
+    "wizard_options":[
+        {"name":"Community","questions":[443,297]},
+        {"name":"Political","questions":[268,289,290,261]},
+        {"name":"Demografic","questions":[290,261]}
+    ],
+    "adminLang":["","",""]
+
+}
