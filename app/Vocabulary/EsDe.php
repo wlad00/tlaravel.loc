@@ -12,7 +12,7 @@ class EsDe extends Model
 {
     protected $connection = 'mysql2';
 
-    protected $table = 'es_de';
+    protected $table = 'es_de_done';
 
     protected $fillable = ['trend_1','trend_2','es','de' ];
 

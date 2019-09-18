@@ -12,7 +12,7 @@ class RuFr extends Model
 {
     protected $connection = 'mysql2';
 
-    protected $table = 'ru_fr';
+    protected $table = 'ru_fr_done';
 
     protected $fillable = ['trend_1','trend_2','ru','fr' ];
 

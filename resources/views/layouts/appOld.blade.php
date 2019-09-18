@@ -39,11 +39,41 @@
 
     <button ng-click="makeFile()">makeFile</button>
 
-    <h3>Serial Area Stacked</h3>
-    <amchart ng-model='areaStacked'>
-    </amchart>
+    <div class="row">
+        <div >
 
 
+            <text-angular  ng-model="t0" ta-toolbar="myButtons">
+            </text-angular>
+
+
+        </div>
+    </div>
+    <br>
+    <div class="ui big header">Model = @{{ t0 }}</div>
+
+
+    <br>
+    <br>
+    <br>
+
+    <text-angular  ng-model="t1" ta-toolbar="myButtons">
+    </text-angular>
+    <br>
+
+    Model = @{{ t1 }}
+    <br>
+    <br>
+    <br>
+
+
+    <text-angular  ng-model="t2" ta-toolbar="myButtons">
+    </text-angular>
+
+    <br>
+
+    Model = @{{ t2 }}
+    <br>
 
 </div>
 
@@ -54,11 +84,6 @@
 
 
 </body
-
-<!-- Loads amCharts 4 -->
-<script src="https://www.amcharts.com/lib/4/core.js"></script>
-<script src="https://www.amcharts.com/lib/4/charts.js"></script>
-<script src="https://www.amcharts.com/lib/4/themes/animated.js"></script>
 
 <!-- Angular -->
 

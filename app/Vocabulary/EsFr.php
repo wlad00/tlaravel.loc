@@ -12,7 +12,7 @@ class EsFr extends Model
 {
     protected $connection = 'mysql2';
 
-    protected $table = 'es_fr';
+    protected $table = 'es_fr_done';
 
     protected $fillable = ['trend_1','trend_2','es','fr' ];
 

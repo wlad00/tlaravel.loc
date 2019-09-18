@@ -8,13 +8,13 @@ use Illuminate\Notifications\Notifiable;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 
-class RuDe extends Model
+class Spanish extends Model
 {
     protected $connection = 'mysql2';
 
-    protected $table = 'ru_de_done';
+    protected $table = 'spanish';
 
-    protected $fillable = ['trend_1','trend_2','ru','de' ];
+    protected $fillable = ['en','ru','es','de','fr' ];
 
     public $timestamps = false;
 
