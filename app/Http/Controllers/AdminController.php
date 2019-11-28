@@ -9,6 +9,7 @@ use App\Vocabulary\EnDe;
 use App\Vocabulary\EnEs;
 use App\Vocabulary\EnFr;
 use App\Vocabulary\English;
+use App\Vocabulary\English6300;
 use App\Vocabulary\EnRu;
 use App\Vocabulary\EsDe;
 use App\Vocabulary\EsFr;
@@ -50,14 +51,255 @@ class AdminController extends Controller
 
     }
 
+
+//15 find ru-en
+    public function makeFile15(){
+
+        $dbFROM = new English;
+        $dbTO = new French;
+        $FILE = 'z_Fr.txt';
+        $lan1 = 'fr';
+
+        $isChange = '';
+        $isChange = 'isChange';
+        /*--------------------------------------*/
+        $arrLAN = ['fr','de','es','ru','en'];
+
+        $DBfrom = $dbFROM->setConnection('mysql2');
+        $DBto = $dbTO->setConnection('mysql2');
+
+        $ItemsTO = $DBto->all();
+
+        $arrToOne = array();
+        Storage::disk('admin_disk')->put($FILE, 'start');
+
+
+        foreach($ItemsTO as $item){
+
+            foreach($arrLAN as $lan){
+
+                $str = (string)$item->$lan;
+
+                $arrStr = explode(" ", $str);
+
+                if(sizeof($arrStr)>1 && strlen(trim($str))!=0){
+
+                    $itemEn = $DBfrom->where('en',$item->en)->get()->first();
+
+                     if(!$itemEn ){ continue;}
+
+                     if($itemEn->$lan1 != $item->$lan1  ){ continue;}
+
+                         $arrToOne[$str]= $itemEn->$lan;
+                     $string = $item->id.' '.$str.' => '.$itemEn->$lan;
+                    echo $string.PHP_EOL;
+                         Storage::disk('admin_disk')->append($FILE, $string);
+
+                         if($isChange == 'isChange'){
+
+                            $item->$lan = $itemEn->$lan;
+
+                            $item->save();
+                         }
+
+                }
+            }
+        }
+
+       /* $json = json_encode($arrToOne,JSON_UNESCAPED_UNICODE);
+        Storage::disk('admin_disk')->put($FILE, $json);*/
+
+        return sizeof($arrToOne);
+
+
+    }
+
+//14 delete deleted
+    public function makeFile14(){
+
+        $db = new French;
+        $LAN = 'fr';
+        $isDelete = '';
+        $isDelete = 'isDelete';
+
+        /*-------------------*/
+        $FILE ='del.txt';
+        $DB = $db->setConnection('mysql2');
+
+        $ArrItems = $DB->all();
+
+        $json = Storage::disk('admin_disk')->get($FILE);
+
+        $arrJSON = json_decode($json);
+        $arrDel  = array();
+
+        foreach($ArrItems as $item){
+
+            if(in_array($item->$LAN, $arrJSON)) {
+
+                $arrDel[] = $item->$LAN;
+                echo $item->$LAN.PHP_EOL;
+
+                if($isDelete = 'isDelete'){
+
+                    $item->delete();
+                }
+            }
+        }
+
+        return sizeof($arrDel);
+
+    }
+//13 change to small letters
+    public function makeFile13(){
+        $db = new Russian;
+        $LAN = 'fr';
+        $isSave = '';
+//        $isSave = 'isSave';
+        /*----------------------*/
+        $DB = $db->setConnection('mysql2');
+
+        $ItemsOld = $DB->all();
+
+        foreach($ItemsOld as $item){
+
+            if($item->$LAN != mb_strtolower($item->$LAN)){
+                echo $item->$LAN.'; ';
+                $item->$LAN = mb_strtolower($item->$LAN);
+
+                if($isSave == 'isSave'){
+
+                    $item->save();
+                }
+
+            }
+        }
+
+    }
+
+//12 find deleted
+    public function makeFile12(){
+        $dbOld = new English6300;
+        $dbNew = new English;
+        $LEN = 'en';
+
+        $lenTO = 'fr';
+
+        /*-------------------*/
+        $FILE ='del.txt';
+        $DBold = $dbOld->setConnection('mysql2');
+        $DBnew = $dbNew->setConnection('mysql2');
+        $isOne = function($str){
+
+            $arrStr = explode(" ", $str);
+
+            if(sizeof($arrStr) == 1){
+                            return true; }
+            else {
+                return false; }
+        };
+
+
+        $ItemsOld = $DBold->all();
+        $ItemsNew = $DBnew->all();
+
+        $arrNew = array();
+
+        foreach($ItemsNew as $item){
+            $arrNew[] = $item->$LEN; }
+
+       $ArrDel = array();
+
+        Storage::disk('admin_disk')->put($FILE, 'start');
+        foreach($ItemsOld as $itemOld){
+
+            if(!in_array($itemOld->$LEN, $arrNew) && $isOne($itemOld->$lenTO)) {
+
+                $ArrDel[]=$itemOld->$lenTO;
+                /*Storage::disk('admin_disk')
+                    ->append($FILE,$itemOld->$LEN/*.';  '.$itemOld->ru.';  '.*/
+                       /* $itemOld->ru.';  '.$itemOld->de.';  '
+                .$itemOld->fr*/
+               /* echo $itemOld->$LEN.PHP_EOL;*/
+            }
+        }
+
+        sort($ArrDel);
+//        foreach($ArrDel as $str){
+//            echo $str.PHP_EOL;
+//            Storage::disk('admin_disk')
+//                ->append($FILE,$str);
+//        }
+
+        $json = json_encode($ArrDel,JSON_UNESCAPED_UNICODE);
+        Storage::disk('admin_disk')->put($FILE, $json);
+
+        return sizeof($ArrDel);
+    }
+
+//11 find moreThenOne
+    public function makeFile(){
+//        $db = new English6300;
+        $dbNew = new English;
+//        $LAN = 'ru';
+        $isDel = '';
+//        $isDel = 'isDel';
+        /*---------------------------------------*/
+        $arrLAN = ['fr','de','es','ru','en'];
+        $FILE ='del.txt';
+
+
+//        $DB = $db->setConnection('mysql2');
+        $DBnew = $dbNew->setConnection('mysql2');
+
+//        $ItemsOld = $DB->all();
+        $ItemsNew = $DBnew->all();
+
+        $arrMore = array();
+        $arrToOne = array();
+
+        foreach($ItemsNew as $item){
+
+            foreach($arrLAN as $lan){
+
+                $str = (string)$item->$lan;
+
+                $arrStr = explode(" ", $str);
+
+                if(sizeof($arrStr)>1 || strlen(trim($str))==0 ){
+
+
+                    array_push( $arrMore, $item->id);
+
+                    if($isDel == 'isDel'){
+
+                        $item->delete();
+                    }
+
+
+                    break;
+
+                }
+            }
+
+        }
+//        sort($arrRu);
+
+
+        $json = json_encode($arrMore,JSON_UNESCAPED_UNICODE);
+        Storage::disk('admin_disk')->put($FILE, $json);
+
+        return sizeof($arrMore).' ; '. sizeof($arrToOne);
+    }
+
 //10 translate from DB
     public function makeFile10(){
 
-        $dbTO = new Spanish;
-        $dbFROM = new RuEs;// en<-es trend_2
+        $dbTO = new French;
+        $dbFROM = new DeFr;// en<-es trend_2
         $trend = 'trend_2';
-        $lenFROM = 'es';
-        $lenTO = 'ru';
+        $lenFROM = 'fr';
+        $lenTO = 'de';
         $isTranslate = '';
         $isTranslate = 'isTranslate';
 /*--------------------------------------*/
@@ -300,22 +542,50 @@ class AdminController extends Controller
 
     //5  del article from DB
 
-    // Fr [a ] la , le , les ,un , une , des
-    // en, de, du, [s'], [l']
-
-    // De [ein ] [eine ] [der ] [das ] [zu ][einen ] [die ] [diese ][dieser ]
-    // Es [a ] [la ] [lo ] [el ] [un ] [una ] [las ] [los ]
-    // Eng -> [a ](2), [an ](3) [to ]3 [the ]4
+    // Fr [a ]
+    // [la ], [le ],[un ], [en ], [de ], [du ]
+    // [les ], [une ], [des ] ,
+    // [s'], [l']
+    // De [zu ]
+    // [ein ][der ] [das ][die ]
+    // [eine ]
+    //  [einen ]  [diese ]
+    // [dieser ]
+    // Es [a ]
+        // [la ] [lo ] [el ] [un ]
+        // [una ] [las ] [los ]
+    // Eng -> [a ],
+    // [an ] [to ]
+    //
+    // [the ]
 
     public function makeFile5(){
 
-        $strDel = "l'";
-        $DB = new French;
-        $LAN = 'fr';
+        $strDel = "dieser ";
+//        $strDel2 = "diese ";
+//        $strDel3 = "des ";
+//
+//        $strDel4 = "ein ";
+//        $strDel5 = "der ";
+//        $strDel6 = "das ";
+//        $strDel7 = "die ";
+//
+//        $strDel8 = "una ";
+//        $strDel9 = "las ";
+//        $strDel10 = "los ";
+//
+//        $strDel11 = "the ";
 
-        $isDel = '';
-        $isDel = 'isDel';
+
+
+        $DB = new Spanish;
+//        $LAN = 'es';
+
+        $isChange = '';
+        $isChange = 'isChange';
         /*-------------------------*/
+        $FILE = 'del.txt';
+        $arrLAN = ['fr','de','es','ru','en'];
 
 
         $len = strlen($strDel);
@@ -328,34 +598,48 @@ class AdminController extends Controller
 
         foreach($Arr as $item){
 
-            $substr = substr((string)$item->$LAN,0,$len);
+            foreach($arrLAN as $Lan) {
 
-            if ($substr == $strDel){
+                $substr = substr((string)$item->$Lan, 0, $len);
 
-                $substr = substr((string)$item->$LAN,$len);
-                echo $item->$LAN.'; ';
-                array_push($arrDel, $substr);
+                if ($substr == $strDel
+//                    || $substr == $strDel2
+//                     || $substr == $strDel3 || $substr == $strDel4
+//                     || $substr == $strDel5 || $substr == $strDel6
+//                     || $substr == $strDel7 || $substr == $strDel8
+//                     || $substr == $strDel9 || $substr == $strDel10
+//                                             || $substr == $strDel11
+                ) {
 
-                $item->$LAN = $substr;
 
-                if($isDel == 'isDel'){
+                    $substr = substr((string)$item->$Lan, $len);
+                    echo $item->$Lan .' ('.$Lan.') '.$item->id .'; '.PHP_EOL;
+                    array_push($arrDel, $substr.' ('.$Lan.') '.$item->id);
 
-                    $item->save();
+                    $item->$Lan = $substr;
+
+                    if ($isChange == 'isChange') {
+
+                        $item->save();
+                    }
+
                 }
-
             }
+
         }
 
         $json = json_encode($arrDel,JSON_UNESCAPED_UNICODE);
-        Storage::disk('admin_disk')->put('del.txt', $json);
+        Storage::disk('admin_disk')->put($FILE, $json);
+
+        return sizeof($arrDel);
     }
 
 //4  make file from DB / 2)ifFindEmpty
     public function makeFile4(){
 
-        $DB = new Spanish;
-        $lenFROM = 'es'; $lenTO = 'ru';
-        $FILE ='1000esAdd.txt';
+        $DB = new French;
+        $lenFROM = 'fr'; $lenTO = 'de';
+        $FILE ='1000frAdd.txt';
         $isFindEmpty = 'isFindEmpty';
         /*---------------------------------------*/
 
@@ -388,9 +672,9 @@ class AdminController extends Controller
 
 
     //3 from txt to DB translate , change source FILE
-    public function makeFile(){
+    public function makeFile3(){
 
-        $FILE = '1000esAdd.txt';
+        $FILE = '1000frAdd.txt';
 //        $FILE = 'del.txt';
 
         // 1 en_fr,
@@ -468,7 +752,7 @@ class AdminController extends Controller
             }
         }
 
-
+        Storage::disk('admin_disk')->append('log.txt','end;\n' );
 
         return ' sizof(Arr) = '.sizeof($Arr).' ; ';
 
@@ -477,7 +761,7 @@ class AdminController extends Controller
     // need to change EnEs -> RuEs(2), (4), (6)
     private function loopFn($word, $trend){
 
-        $DB = new Spanish;  $FROM = 'es'; $TO = 'ru';
+        $DB = new French;  $FROM = 'fr'; $TO = 'de';
         $isAddTo4 = 'isAddTo4';
 
         $trend = 'trend_1'; // if isAddTo4 any trend
@@ -599,7 +883,7 @@ class AdminController extends Controller
             if($strTrans){
                     break; }
 
-            $log = 'Error translate = '.($i+1).' ('.$this->Num.') '.(60*($i+1)).'sec; ';
+            $log = 'Error tr ('.$word.') = '.($i+1).' ('.$this->Num.') '.(60*($i+1)).'sec; ';
 
             echo $log.PHP_EOL;
 

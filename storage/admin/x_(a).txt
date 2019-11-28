@@ -1,0 +1,1 @@
+["party (en) 437","tiempo (es) 545","meeting (en) 704","gagné (fr) 750","complaint (en) 1277","game (en) 1620","spoon (en) 2237","monkey (en) 2835","person (en) 3428","cut (en) 3768","fait (fr) 4782","family (en) 4798","joint (en) 5016","sabiendas (es) 5049","propósito (es) 5126","country (en) 5253","menudo (es) 5964","cup (en) 5971"]
