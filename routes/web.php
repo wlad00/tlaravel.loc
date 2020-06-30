@@ -1,5 +1,15 @@
 <?php
 
+//store a push subscriber.
+Route::post('/push','PushController@store');
+
+//make a push notification.
+Route::get('/push','PushController@push')->name('push');
+//Route::get('/push','PushController@push')->name('push');
+
+
+
+
 /*
 |--------------------------------------------------------------------------
 | Web Routes
