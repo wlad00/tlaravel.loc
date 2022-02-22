@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="{{ app()->getLocale() }}">
+<html lang="{{ app()->getLocale() }}"  ng-app="appHome" >
     <head>
         <meta charset="utf-8">
         <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -63,9 +63,17 @@
                 margin-bottom: 30px;
             }
         </style>
+
+
+        <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.8.2/angular.min.js"></script>
+        <script src="js/AngService.js"></script>
+
+        <script src="js/AngHome.js"></script>
+
+        <script src="js/AnSocket.js"></script>
     </head>
     <body>
-        <div class="flex-center position-ref full-height">
+        <div class="flex-center position-ref full-height"  ng-controller="AngHome">
             @if (Route::has('login'))
                 <div class="top-right links">
                     @auth
@@ -79,17 +87,39 @@
 
             <div class="content">
                 <div class="title m-b-md">
-                    Laravel
+                    tLaravel.loc
+                </div>
+                {{--<button ng-click="playAudio()">playAudio</button>--}}
+
+                {{------------------------------------------------}}
+
+                <div ng-if="!isUserLoggedIn" class="row">
+                    <div class="col-md-8">
+                        <input type="text" ng-model="userName" class="form-control" placeholder="Your name">
+                    </div>
+                    <div class="col-md-4 text-right">
+                        <button ng-click="login(userName)" class="btn btn-primary btn-block">Login</button>
+                    </div>
                 </div>
 
-                <div class="links">
-                    <a href="https://laravel.com/docs">Documentation</a>
-                    <a href="https://laracasts.com">Laracasts</a>
-                    <a href="https://laravel-news.com">News</a>
-                    <a href="https://forge.laravel.com">Forge</a>
-                    <a href="https://github.com/laravel/laravel">GitHub</a>
+                {{---------------------------------------------------}}
+
+                <div ng-if="isUserLoggedIn" class="row">
+
+                    <div class="col-md-4 offset-md-8">
+                        <button ng-click="logout()" class="btn btn-primary btn-block">Logout</button>
+                    </div>
+                    <h2>I'm @{{ loggedInUser }}</h2>
+                </div>
+
+
+
+                <div class="links" style="margin-top: 60px;">
+
                 </div>
             </div>
         </div>
+
+
     </body>
 </html>
