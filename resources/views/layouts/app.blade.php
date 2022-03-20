@@ -19,6 +19,14 @@
 
     <!-- Styles -->
     <link href="{{ asset('css/app.css') }}" rel="stylesheet">
+    <link href="{{ asset('css/home.css') }}" rel="stylesheet">
+
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.8.2/angular.min.js"></script>
+    <script src="js/AngService.js"></script>
+
+    <script src="js/AngHome.js"></script>
+
+    <script src="js/AnSocket.js"></script>
 </head>
 <body>
     <div id="app">

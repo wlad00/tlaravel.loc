@@ -12,25 +12,27 @@ app
 
 
             login: function(userName){
-                var data = {'type' : 'login', 'name': userName};
+                var data = {'type' : 'login', 'name': userName, 'email': userName };
 
-                this.init();
+                this.initRoot();
                 conn.send(JSON.stringify(data));
             },
             logout: function(){
-                this.init();
+                this.initRoot();
 
                 conn.close()
 
             },
-            init: function(){
+            initRoot: function(){
                 var userLogedIn = localStorage.getItem('loggedInUser');
+
+                cl('/initRoot------------');
 
                 if(userLogedIn){
                     $rootScope.loggedInUser = userLogedIn;
                     $rootScope.isUserLoggedIn = true;
                     setTimeout(() => {
-                        var data = {'type' : 'login', 'name': userLogedIn};
+                        var data = {'type' : 'login', 'name': userLogedIn, 'email': userName};
                         conn.send(JSON.stringify(data));
                     },100)
                 }else{

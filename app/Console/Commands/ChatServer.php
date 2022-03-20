@@ -19,6 +19,8 @@ class ChatServer extends Command
     protected $signature = 'chat_server:serve';
 
     /**
+     * php artisan chat_server:serve
+     *
      * The console command description.
      *
      * @var string
@@ -42,6 +44,12 @@ class ChatServer extends Command
      */
     public function handle()
     {
+
+        /*$w = new Worker();
+
+        $w->go(15);*/
+
+
         $this->info("Start server");
 
         $server = IoServer::factory(
@@ -53,7 +61,6 @@ class ChatServer extends Command
 
             ),
             8081
-
 
         );
 
