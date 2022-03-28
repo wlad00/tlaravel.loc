@@ -5,9 +5,10 @@ namespace App\Classes\Socket;
 
 use App\CONSTANT;
 
-class Persons{
+class SingleP{
 
     private $arrPersons = [],$arrIndexes=[];
+    private $arrUsers = [];
 
     private static $instance = null;
     /**
@@ -88,6 +89,19 @@ class Persons{
         $this->arrIndexes = $arrIndexes;
     }
 
+    public function setArrUsers($arrUsers){
+
+        $arrUsersP = [];
+
+        foreach($arrUsers as $user){
+
+            array_push($arrUsersP,
+                [$user->name,$user->rating,$user->email]);
+        }
+
+        $this->arrUsers = $arrUsersP;
+    }
+
     private function makeArrPersons(){
 
         $arrBots = CONSTANT::ARR_BOTS;
@@ -108,7 +122,7 @@ class Persons{
 
         $this->makeArrPersons();
 
-        return $this->arrPersons;
+        return array_merge($this->arrPersons,$this->arrUsers) ;
     }
     public function getArrIndexes(){
 
@@ -116,7 +130,7 @@ class Persons{
     }
 
     /**
-     * @return Persons|null
+     * @return SingleP|null
      * @throws \Exception
      */
     public static function getInstance()

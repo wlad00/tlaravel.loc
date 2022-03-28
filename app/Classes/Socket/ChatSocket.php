@@ -14,7 +14,7 @@ use Ratchet\ConnectionInterface;
 
 class ChatSocket extends BaseSocket
 {
-    protected $clients;
+    protected $Connections;
     protected $arrUserSocket;
     protected $persons;
     protected $startInterval = false;
@@ -26,14 +26,16 @@ class ChatSocket extends BaseSocket
      */
     public function __construct()
     {
-        $this->clients = new \SplObjectStorage;
+        $this->Connections = new \SplObjectStorage;
 
-//        $this->startInterval();
     }
 
     public function onMessage(ConnectionInterface $conn, $msg) {
 
         $Msg = json_decode($msg);
+
+        echo $msg;
+        echo "";
 
 
         switch($Msg->type){
@@ -41,21 +43,15 @@ class ChatSocket extends BaseSocket
             case 'interval': echo 'I-';
                 $this->sendArrPersons(); break;
 
-            case 'login': echo 'login '.$Msg->email;
-//            echo '   '.json_encode($Msg->arrFriends,JSON_UNESCAPED_UNICODE);
-            Actives::addToArrActives($Msg,$conn);
-//            Actives::notifyUsers($Msg->email);
-            break;
+            case 'update':
 
-            case 'invite': break;
-            case 'chancel_invite': break;
+                SingleU::updateUser($Msg,$conn);
+                SingleU::notifyFriends(); break;
+
+            case 'msg':
+                SingleU::sendMsg($Msg);
+
         }
-//
-//        if($Msg->type == 'interval'){
-//            echo 'int-------';
-//            $this->sendArrPersons();
-//            return;
-//        }
 
     }
 
@@ -64,22 +60,22 @@ class ChatSocket extends BaseSocket
      */
     private function sendArrPersons(){
 
-        $persons = Persons::getInstance();
+        $singleP = SingleP::getInstance();
 
         $rand2 = random_int(0,1);
 
-        if($rand2>0) $persons->addIndex();
+        if($rand2>0) $singleP->addIndex();
         else
-            $persons->removeIndex();
+            $singleP->removeIndex();
 
-        $arrPersons = $persons->getArrPersons();
-        $arrIndexes = $persons->getArrIndexes();
+        $arrPersons = $singleP->getArrPersons();
+        $arrIndexes = $singleP->getArrIndexes();
 
-        foreach($this->clients as $client){
+        foreach($this->Connections as $conn){
 
-            $client->send(json_encode(
+            $conn->send(json_encode(
                 ['rand2'=>$rand2,
-                    'connId' => $client->resourceId,
+                    'connId' => $conn->resourceId,
                     'arrPersons' => $arrPersons,
                     'arrIndexes' => $arrIndexes]
             ));
@@ -88,123 +84,27 @@ class ChatSocket extends BaseSocket
 
 
     public function onOpen(ConnectionInterface $conn) {
-        // Store the new connection to send messages to later
-        $this->clients->attach($conn);
+
+        $this->Connections->attach($conn);
 
         echo "New connection 2! ({$conn->resourceId})\n";
 
         echo $conn->remoteAddress."\n";
-//        var_dump($conn);
-
-        /*$persons = new Persons();
-
-        $conn->send(json_encode(
-            ['connId' => $conn->resourceId,
-            'arrPersons' => 'arrPersons']
-        ));*/
-
-
-        /*if(!$this->startInterval) {
-            $this->startInterval= true;
-            $this->startInterval();
-        }*/
-    }
-    public function updateSocketId($user,$id){
-
-        $data = $this->database->select('socket_id', [
-            'user'
-        ], [
-            'user' => $user
-        ]);
-        if(empty($data)){
-            // insert
-            //echo 'Insert';
-            $this->database->insert('socket_id', [
-                'user' => $user,
-                'socket_id' => $id
-            ]);
-        }else{
-            // update
-            //echo 'Update';
-            $data = $this->database->update('socket_id', [
-                'socket_id' => $id
-            ], [
-                'user' => $user
-            ]);
-        }
     }
 
-    public function onMessage1(ConnectionInterface $conn, $msg) {
 
-        $Msg = json_decode($msg);
-
-        if($Msg->type == 'interval'){
-            echo 'int-------';
-            return;
-        }
-
-
-
-
-
-
-
-
-        $W = new WorkerSocket($conn, $msg);
-
-
-        $W->login();
-
-
-
-        return;
-
-        if ($jsonMsg->type == "login") {
-
-            $onlineUsers = [];
-            $onlineUsers['type'] = "onlineUsers";
-
-            /*--------------------------------*/
-
-            $this->activeUsers[$conn->resourceId] = $jsonMsg->name;
-
-            /*------------------------------------*/
-
-            $this->updateSocketId($jsonMsg->name,$conn->resourceId);
-
-            $onlineUsers['onlineUsers'] = $this->activeUsers;
-
-            $this->sendMessageToAll(json_encode($onlineUsers));
-
-        } elseif ($jsonMsg->type == "message") {
-            $this->sendMessageToUser($conn, $jsonMsg);
-        }
-
-
-    }
-    public function sendMessageToUser($conn, $msg){
-        $to = $msg->data->to;
-        $data = $this->database->select('socket_id', [
-            'socket_id'
-        ], [
-            'user' => $to
-        ]);
-
-        $toSocketId = $data[0]['socket_id'];
-
-        foreach ($this->clients as $client) {
-            if ($client->resourceId == $toSocketId) {
-                $client->send(json_encode(['type' => 'message','data' => $msg->data]));
-            }
-        }
-    }
+    /* Close */
 
     public function onClose(ConnectionInterface $conn) {
-        // The connection is closed, remove it, as we can no longer send it messages
-        $this->clients->detach($conn);
+
+        $this->Connections->detach($conn);
+
+        SingleU::minusUser($conn);
 
         echo "Connection {$conn->resourceId} has disconnected\n";
     }
+
+    /* Error */
 
     public function onError(ConnectionInterface $conn, \Exception $e) {
         echo "An error has occurred: {$e->getMessage()}\n";
