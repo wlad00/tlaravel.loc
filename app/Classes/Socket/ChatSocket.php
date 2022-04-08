@@ -9,6 +9,8 @@
 namespace App\Classes\Socket;
 
 
+use App\Classes\Socket\Singletons\SingleP;
+use App\Classes\Socket\Singletons\SingleU;
 use App\Classes\Socket\Base\BaseSocket;
 use Ratchet\ConnectionInterface;
 
@@ -34,11 +36,29 @@ class ChatSocket extends BaseSocket
 
         $Msg = json_decode($msg);
 
-        echo $msg;
-        echo "";
+//        echo $msg;
+//        echo "\n";
+       /* echo gettype($Msg);
+        echo "\n";*/
 
 
         switch($Msg->type){
+
+            case 'log': echo 'LOG-';
+
+                ChatService::saveLog($Msg); break;
+
+            /*case 'removeFriend':
+
+                SingleU::updateArchiveFriends($Msg);
+                SingleU::checkFriend($Msg); break;*/
+
+            case 'check_friend':
+
+                SingleU::updateArchiveFriends($Msg);
+                SingleU::checkFriend($Msg);
+                SingleU::checkToFriend($Msg); break;
+
 
             case 'interval': echo 'I-';
                 $this->sendArrPersons(); break;
@@ -48,7 +68,7 @@ class ChatSocket extends BaseSocket
                 SingleU::updateUser($Msg,$conn);
                 SingleU::notifyFriends(); break;
 
-            case 'msg':
+            case 'send':
                 SingleU::sendMsg($Msg);
 
         }
@@ -90,6 +110,18 @@ class ChatSocket extends BaseSocket
         echo "New connection 2! ({$conn->resourceId})\n";
 
         echo $conn->remoteAddress."\n";
+
+        $singleP = SingleP::getInstance();
+
+        $arrPersons = $singleP->getArrPersons();
+
+        $conn->send(json_encode(
+            ['arrPersons' => $arrPersons,
+                'arrFriends'=>[],
+                'type'=>'notify'
+                ]
+        ));
+
     }
 
 
@@ -99,9 +131,10 @@ class ChatSocket extends BaseSocket
 
         $this->Connections->detach($conn);
 
+        echo "Connection {$conn->resourceId} has disconnected\n";
+
         SingleU::minusUser($conn);
 
-        echo "Connection {$conn->resourceId} has disconnected\n";
     }
 
     /* Error */

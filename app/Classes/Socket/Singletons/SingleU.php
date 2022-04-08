@@ -1,13 +1,17 @@
 <?php
 
-namespace App\Classes\Socket;
+namespace App\Classes\Socket\Singletons;
 
+
+use App\Classes\Socket\ChatService;
 
 class SingleU{
 
     private $arrUsers = [];
     private $this_user;
     private $arrFriends;
+
+    private $ArchiveFriends = [];
 
     private static $instance = null;
     /**
@@ -27,7 +31,16 @@ class SingleU{
 
         $U = static::getInstance();
 
-        $conn = $U->arrUsers[$Msg->email]->conn;
+        if(is_numeric($Msg->email_to)){
+
+            $Msg->TypeStep = '3_agree';
+            $Msg->email_to = $Msg->email_from;
+
+            sleep(5);
+        }
+
+
+        $conn = $U->arrUsers[$Msg->email_to]->conn;
 
         $conn->send( json_encode(
                 $Msg
@@ -46,6 +59,11 @@ class SingleU{
 
         $email = ChatService::emailByConn($conn,$U->arrUsers);
 
+        if(!$email){
+            echo "-- disconnect VIS --\n" ;
+            return;
+        }
+
         $user = $U->arrUsers[$email];
 
         $U->arrFriends = $user->arrFriends;
@@ -58,6 +76,54 @@ class SingleU{
 
     /**
      * @param $Msg
+     * @throws \Exception
+     */
+    public static function checkFriend($Msg){
+
+        $U = static::getInstance();
+
+        if(!isset($U->ArchiveFriends[$Msg->friend_email])) return;
+
+        $friendEmails = $U->ArchiveFriends[$Msg->friend_email];
+
+        if(in_array($Msg->user_email,$friendEmails)) return;
+
+
+        $user = $U->arrUsers[$Msg->user_email];
+
+        $user->conn->send( json_encode(
+                ['friend_email'=>$Msg->friend_email,
+                    'type'=>'remove_friend']
+            )
+        );
+
+    } /**
+     * @param $Msg
+     * @throws \Exception
+     */
+    public static function checkToFriend($Msg){
+
+        $U = static::getInstance();
+
+//        if(!isset($U->ArchiveFriends[$Msg->friend_email])) return;
+
+        $userEmails = $U->ArchiveFriends[$Msg->user_email];
+
+        if(in_array($Msg->friend_email,$userEmails)) return;
+
+
+        $friend = $U->arrUsers[$Msg->friend_email];
+
+        $friend->conn->send( json_encode(
+                ['friend_email'=>$Msg->user_email,
+                    'type'=>'remove_friend']
+            )
+        );
+
+    }
+
+    /**
+     * @param $Msg
      * @param $conn
      * @throws \Exception
      */
@@ -65,21 +131,44 @@ class SingleU{
 
         $U = static::getInstance();
 
+        echo "updateUser()---- \n";
+
+
         ChatService::updateFriends($Msg->arrFriends,$U->arrUsers);
 
         $U->arrFriends = $Msg->arrFriends;
 
         $U->this_user = (object)[
+            'enable'=>true,
             'conn'=>$conn,
-            'arrFriends'=>$Msg->arrFriends,
+
             'name'=>$Msg->name,
             'email'=>$Msg->email,
             'rating'=>$Msg->rating,
-            'block'=>$Msg->block,
-            'enable'=>true
+
+            'arrFriends'=>$Msg->arrFriends,
+            'block'=>$Msg->block
         ];
 
         $U->arrUsers[$Msg->email] = $U->this_user;
+
+
+        $U->ArchiveFriends[$Msg->email] = ChatService::getEmailsFriends($Msg->arrFriends);
+
+
+       /* echo json_encode($U->this_user,JSON_UNESCAPED_UNICODE);
+        echo "\n";*/
+    }
+
+    /**
+     * @param $Msg
+     * @throws \Exception
+     */
+    public static function updateArchiveFriends($Msg){
+
+        $U = static::getInstance();
+
+        $U->ArchiveFriends[$Msg->user_email] = ChatService::getEmailsFriends($Msg->arrFriends);
 
     }
 
@@ -90,7 +179,7 @@ class SingleU{
      */
     public static function notifyFriends(){
 
-        echo 'notifyUsers-----------';
+        echo "notifyFriends()---------\n";
 
         $U = static::getInstance();
 
@@ -111,9 +200,13 @@ class SingleU{
         //3 Friends
         foreach($U->arrFriends as $friend){
 
+            if(!isset($U->arrUsers[$friend->email])) continue;
+
             $user = $U->arrUsers[$friend->email];
 
              ChatService::updateFriends($user->arrFriends,$U->arrUsers) ;
+
+             if(isset($friend->conn))
 
             $friend->conn->send( json_encode(
                     ['arrPersons'=>$arrPersons,

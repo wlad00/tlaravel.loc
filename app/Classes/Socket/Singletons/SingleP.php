@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Classes\Socket;
+namespace App\Classes\Socket\Singletons;
 
 
 use App\CONSTANT;
@@ -91,7 +91,9 @@ class SingleP{
 
     public function setArrUsers($arrUsers){
 
-        $arrUsersP = [];
+        $this->arrUsers = $arrUsers;
+
+        /*$arrUsersP = [];
 
         foreach($arrUsers as $user){
 
@@ -99,7 +101,7 @@ class SingleP{
                 [$user->name,$user->rating,$user->email]);
         }
 
-        $this->arrUsers = $arrUsersP;
+        $this->arrUsers = $arrUsersP;*/
     }
 
     private function makeArrPersons(){
