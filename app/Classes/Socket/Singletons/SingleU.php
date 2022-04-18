@@ -10,6 +10,7 @@ class SingleU{
     private $arrUsers = [];
     private $this_user;
     private $arrFriends;
+    private $arrPersons;
 
     private $ArchiveFriends = [];
 
@@ -20,6 +21,17 @@ class SingleU{
      */
     public function __construct()
     {
+
+    }
+
+    /**
+     * @param $conn
+     * @throws \Exception
+     */
+    public static function sendError($conn){
+
+        $U = static::getInstance();
+
 
     }
 
@@ -36,9 +48,11 @@ class SingleU{
             $Msg->TypeStep = '3_agree';
             $Msg->email_to = $Msg->email_from;
 
+            echo "sleep 5 sec-------------\n";
+
             sleep(5);
         }
-
+//        echo  json_encode($U->arrUsers)."\n";
 
         $conn = $U->arrUsers[$Msg->email_to]->conn;
 
@@ -72,22 +86,31 @@ class SingleU{
 
         static::notifyFriends();
 
+        echo "minusUser----- $email \n";
+
+
+
     }
 
     /**
      * @param $Msg
      * @throws \Exception
      */
-    public static function checkFriend($Msg){
+    public static function checkFriendToUser($Msg){
 
         $U = static::getInstance();
+
+        echo "1 \n";
 
         if(!isset($U->ArchiveFriends[$Msg->friend_email])) return;
 
         $friendEmails = $U->ArchiveFriends[$Msg->friend_email];
 
+        echo "2 \n";
+
         if(in_array($Msg->user_email,$friendEmails)) return;
 
+         echo "3 \n";
 
         $user = $U->arrUsers[$Msg->user_email];
 
@@ -105,7 +128,9 @@ class SingleU{
 
         $U = static::getInstance();
 
-//        if(!isset($U->ArchiveFriends[$Msg->friend_email])) return;
+//        echo "checkToFriend----------\n";
+
+        if(!isset($U->ArchiveFriends[$Msg->friend_email])) return;
 
         $userEmails = $U->ArchiveFriends[$Msg->user_email];
 
@@ -122,6 +147,44 @@ class SingleU{
 
     }
 
+
+    /**
+     * @param $Msg
+     * @throws \Exception
+     */
+    public static function updateArchiveFriends(&$Msg){
+
+        $U = static::getInstance();
+
+        $arrFriendsNew = [];
+        foreach($Msg->arrFriends as $friend){
+
+            //1
+            if(!isset($U->ArchiveFriends[$friend->email])){
+
+                        array_push($arrFriendsNew,$friend);
+                        continue;
+            }
+
+            $archiveEmails = $U->ArchiveFriends[$friend->email];
+
+            //2
+            if(isset($archiveEmails[$Msg->email]))
+                    array_push($arrFriendsNew,$friend);
+
+            //3
+        }
+
+        $Msg->arrFriends = $arrFriendsNew;
+
+        //4
+        $U->ArchiveFriends[$Msg->email] = ChatService::getEmailsFriends($Msg->arrFriends);
+
+
+
+    }
+
+
     /**
      * @param $Msg
      * @param $conn
@@ -131,13 +194,17 @@ class SingleU{
 
         $U = static::getInstance();
 
-        echo "updateUser()---- \n";
-
-
-        ChatService::updateFriends($Msg->arrFriends,$U->arrUsers);
 
         $U->arrFriends = $Msg->arrFriends;
 
+        //1
+        ChatService::updateFriendsData($U->arrFriends,$U->arrUsers) ;
+
+
+
+//        echo "updateUser --2---- \n";
+
+        //2
         $U->this_user = (object)[
             'enable'=>true,
             'conn'=>$conn,
@@ -146,32 +213,89 @@ class SingleU{
             'email'=>$Msg->email,
             'rating'=>$Msg->rating,
 
-            'arrFriends'=>$Msg->arrFriends,
+            'arrFriends'=>$U->arrFriends,
             'block'=>$Msg->block
         ];
 
         $U->arrUsers[$Msg->email] = $U->this_user;
 
+        //3 archive friends Emails
 
-        $U->ArchiveFriends[$Msg->email] = ChatService::getEmailsFriends($Msg->arrFriends);
 
 
-       /* echo json_encode($U->this_user,JSON_UNESCAPED_UNICODE);
-        echo "\n";*/
+        //4 get arrPersons
+
+        $singleP = SingleP::getInstance();
+
+        $singleP->setArrUsers($U->arrUsers);
+
+        $U->arrPersons = $singleP->getArrPersons();
     }
+
+    /**
+     * @throws \Exception
+     */
+    /*public function updateFriends(){
+
+        $U = static::getInstance();
+
+        for($i=0;$i<sizeof($U->arrFriends);$i++){
+
+            $friend = $U->arrFriends[$i];
+
+            if(!isset($U->arrUsers[$friend->email])){
+
+                $friend->enable = false;
+                continue;
+            }
+
+            $user = $U->arrUsers[$friend->email];
+
+            $friend->enable = true;
+            $friend->conn = $user->conn;
+            $friend->name = $user->name;
+            $friend->rating = $user->rating;
+            $friend->block = $user->block;
+        }
+    }*/
 
     /**
      * @param $Msg
      * @throws \Exception
      */
-    public static function updateArchiveFriends($Msg){
+    /*public static function updateArchiveFriends($Msg){
 
         $U = static::getInstance();
 
+        //1
         $U->ArchiveFriends[$Msg->user_email] = ChatService::getEmailsFriends($Msg->arrFriends);
 
-    }
+        //2
+        $user = $U->arrUsers[$Msg->user_email];
 
+        $user->arrFriends = $Msg->arrFriends;
+    }*/
+
+    /**
+     * @throws \Exception
+     */
+    public static function notifyThisUser(){
+
+        $U = static::getInstance();
+
+
+        ChatService::updateFriendsData($U->this_user->arrFriends,$U->arrUsers) ;
+
+        //2 this User
+        $U->this_user->conn->send( json_encode(
+                ['arrPersons'=>$U->arrPersons,
+                    'arrFriends'=>$U->this_user->arrFriends,
+                    'type'=>'notify']
+            )
+        );
+
+
+    }
 
     /**
      * @param $email
@@ -179,37 +303,27 @@ class SingleU{
      */
     public static function notifyFriends(){
 
-        echo "notifyFriends()---------\n";
+//        echo "notifyFriends()----1-----\n";
 
         $U = static::getInstance();
 
-        //1 Persons
-        $singleP = SingleP::getInstance();
+//        echo "notifyFriends----2------\n";
 
-        $singleP->setArrUsers($U->arrUsers);
-
-        $arrPersons = $singleP->getArrPersons();
-
-        //2 this User
-        $U->this_user->conn->send( json_encode(
-                ['arrPersons'=>$arrPersons,
-                    'arrFriends'=>$U->this_user->arrFriends,
-                    'type'=>'notify']
-            )
-        );
         //3 Friends
         foreach($U->arrFriends as $friend){
+
+//            echo "11111------\n";
 
             if(!isset($U->arrUsers[$friend->email])) continue;
 
             $user = $U->arrUsers[$friend->email];
 
-             ChatService::updateFriends($user->arrFriends,$U->arrUsers) ;
+             ChatService::updateFriendsData($user->arrFriends,$U->arrUsers) ;
 
-             if(isset($friend->conn))
+             if(isset($user->conn))
 
-            $friend->conn->send( json_encode(
-                    ['arrPersons'=>$arrPersons,
+            $user->conn->send( json_encode(
+                    ['arrPersons'=>$U->arrPersons,
                         'arrFriends'=>$user->arrFriends,
                         'type'=>'notify']
                 )

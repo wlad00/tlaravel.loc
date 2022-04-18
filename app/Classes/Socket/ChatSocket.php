@@ -36,10 +36,11 @@ class ChatSocket extends BaseSocket
 
         $Msg = json_decode($msg);
 
-//        echo $msg;
+//        echo  'Msg -> '.$Msg->type."\n";
 //        echo "\n";
        /* echo gettype($Msg);
         echo "\n";*/
+//       $i = 4/0;
 
 
         switch($Msg->type){
@@ -52,12 +53,28 @@ class ChatSocket extends BaseSocket
 
                 SingleU::updateArchiveFriends($Msg);
                 SingleU::checkFriend($Msg); break;*/
+            case 'adding_friends':
 
-            case 'check_friend':
+                echo "3.adding_friends --- ".$Msg->friend_email."\n";
 
                 SingleU::updateArchiveFriends($Msg);
-                SingleU::checkFriend($Msg);
-                SingleU::checkToFriend($Msg); break;
+
+                break;
+
+
+            /* case 'check_friend':
+
+                            echo "2.check_friend --- ".$Msg->friend_email."\n";
+
+                            SingleU::updateArchiveFriends($Msg);
+
+
+                            SingleU::checkFriendToUser($Msg);
+
+
+                            SingleU::checkToFriend($Msg);
+
+                            break;*/
 
 
             case 'interval': echo 'I-';
@@ -65,8 +82,22 @@ class ChatSocket extends BaseSocket
 
             case 'update':
 
+                echo "1.updateUser ----- $Msg->email \n";
+
+                SingleU::updateArchiveFriends($Msg);
+
+                echo "2\n";
+
                 SingleU::updateUser($Msg,$conn);
-                SingleU::notifyFriends(); break;
+
+                echo "3\n";
+                SingleU::notifyThisUser();
+                echo "4\n";
+
+                SingleU::notifyFriends();
+                echo "5\n";
+
+                break;
 
             case 'send':
                 SingleU::sendMsg($Msg);
@@ -111,7 +142,7 @@ class ChatSocket extends BaseSocket
 
         echo $conn->remoteAddress."\n";
 
-        $singleP = SingleP::getInstance();
+        /*$singleP = SingleP::getInstance();
 
         $arrPersons = $singleP->getArrPersons();
 
@@ -120,7 +151,7 @@ class ChatSocket extends BaseSocket
                 'arrFriends'=>[],
                 'type'=>'notify'
                 ]
-        ));
+        ));*/
 
     }
 
@@ -141,6 +172,13 @@ class ChatSocket extends BaseSocket
 
     public function onError(ConnectionInterface $conn, \Exception $e) {
         echo "An error has occurred: {$e->getMessage()}\n";
+
+        $conn->send( json_encode(
+            ['type'=>'error', 'error'=>$e->getMessage()
+
+        ]
+        ));
+
 
         $conn->close();
     }

@@ -111,6 +111,8 @@ class SingleP{
 
         foreach($this->arrIndexes as $ind){
 
+            $arrBots[$ind]['enable']=true;
+
             array_push($arrPersons,$arrBots[$ind]);
         }
 
