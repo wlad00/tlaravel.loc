@@ -98,17 +98,19 @@ class ChatSocket extends BaseSocket
 
                 echo "1.updateUser ----- $Msg->email \n";
 
-                $singleU = SingleU::getInstance();
+                $singleU = SingleU::getInstance($Msg);
 
-                SingleU::checkInFriends($Msg);
+                $singleU->checkRemovedInFriends();
 
-                SingleU::updateArchiveFriends($Msg);
+                $singleU->updateMapFriends();
 
-                echo "2\n";
+                $singleU->putUserData($conn);
 
-                SingleU::updateUser($Msg,$conn);
+                $singleU->makeArrPersons();
 
-                echo "3\n";
+                $singleU->notifyThisUser();
+
+
                 SingleU::notifyThisUser();
                 echo "4\n";
 
