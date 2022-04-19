@@ -24,6 +24,30 @@ class SingleU{
 
     }
 
+   /* public function getInstance1()
+    {
+        if (self::$instance == null)
+        {
+            self::$instance = new static();
+        }
+
+        return self::$instance;
+    }*/
+
+
+    /**
+     * @return SingleU|null
+     * @throws \Exception
+     */
+    public static function getInstance()
+    {
+        if (self::$instance == null)
+        {
+            self::$instance = new static();
+        }
+
+        return self::$instance;
+    }
     /**
      * @param $conn
      * @throws \Exception
@@ -74,17 +98,20 @@ class SingleU{
         $email = ChatService::emailByConn($conn,$U->arrUsers);
 
         if(!$email){
-            echo "-- disconnect VIS --\n" ;
+            echo "-- disconnect VISITOR --\n" ;
             return;
         }
 
-        $user = $U->arrUsers[$email];
+        $U->this_user = $U->arrUsers[$email];
 
-        $U->arrFriends = $user->arrFriends;
+//        $U->arrFriends = $user->arrFriends;
+
+        static::notifyFriends();
 
         unset($U->arrUsers[$email]);
 
-        static::notifyFriends();
+
+
 
         echo "minusUser----- $email \n";
 
@@ -96,7 +123,7 @@ class SingleU{
      * @param $Msg
      * @throws \Exception
      */
-    public static function checkFriendToUser($Msg){
+    /*public static function checkFriendToUser($Msg){
 
         $U = static::getInstance();
 
@@ -120,11 +147,12 @@ class SingleU{
             )
         );
 
-    } /**
+    } */
+    /**
      * @param $Msg
      * @throws \Exception
      */
-    public static function checkToFriend($Msg){
+   /* public static function checkToFriend($Msg){
 
         $U = static::getInstance();
 
@@ -145,14 +173,14 @@ class SingleU{
             )
         );
 
-    }
+    }*/
 
 
     /**
      * @param $Msg
      * @throws \Exception
      */
-    public static function updateArchiveFriends(&$Msg){
+    public static function checkInFriends(&$Msg){
 
         $U = static::getInstance();
 
@@ -178,9 +206,31 @@ class SingleU{
         $Msg->arrFriends = $arrFriendsNew;
 
         //4
+      /*  $U->ArchiveFriends[$Msg->email] = ChatService::getEmailsFriends($Msg->arrFriends);*/
+
+
+
+    }
+    public static function notifyRemovedFriend($email_removed){
+
+        $U = static::getInstance();
+
+        $user = $U->arrUsers[$email_removed];
+
+        $arrArch = $U->ArchiveFriends[$email_removed];
+
+
+    }
+
+    /**
+     * @param $Msg
+     * @throws \Exception
+     */
+    public static function updateArchiveFriends(&$Msg){
+
+        $U = static::getInstance();
+
         $U->ArchiveFriends[$Msg->email] = ChatService::getEmailsFriends($Msg->arrFriends);
-
-
 
     }
 
@@ -195,10 +245,10 @@ class SingleU{
         $U = static::getInstance();
 
 
-        $U->arrFriends = $Msg->arrFriends;
+//        $U->arrFriends = $Msg->arrFriends;
 
         //1
-        ChatService::updateFriendsData($U->arrFriends,$U->arrUsers) ;
+        ChatService::updateFriendsData($Msg->arrFriends,$U->arrUsers) ;
 
 
 
@@ -213,7 +263,7 @@ class SingleU{
             'email'=>$Msg->email,
             'rating'=>$Msg->rating,
 
-            'arrFriends'=>$U->arrFriends,
+            'arrFriends'=>$Msg->arrFriends,
             'block'=>$Msg->block
         ];
 
@@ -310,15 +360,18 @@ class SingleU{
 //        echo "notifyFriends----2------\n";
 
         //3 Friends
-        foreach($U->arrFriends as $friend){
+        foreach($U->this_user->arrFriends as $friend){
 
 //            echo "11111------\n";
 
             if(!isset($U->arrUsers[$friend->email])) continue;
 
             $user = $U->arrUsers[$friend->email];
+//            $emailsFriends = $U->mapFriends[$friend->email];
 
-             ChatService::updateFriendsData($user->arrFriends,$U->arrUsers) ;
+
+
+             ChatService::updateFriendsData($user->arrFriends,$U->arrUsers);
 
              if(isset($user->conn))
 
@@ -333,19 +386,7 @@ class SingleU{
 
     }
 
-    /**
-     * @return SingleU|null
-     * @throws \Exception
-     */
-    public static function getInstance()
-    {
-        if (self::$instance == null)
-        {
-            self::$instance = new static();
-        }
 
-        return self::$instance;
-    }
 
 
     /**

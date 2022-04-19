@@ -45,7 +45,9 @@ class ChatSocket extends BaseSocket
 
         switch($Msg->type){
 
-            case 'log': echo 'LOG-';
+            case 'log':
+
+                echo "0.LOG --- ".$msg."\n";
 
                 ChatService::saveLog($Msg); break;
 
@@ -53,11 +55,23 @@ class ChatSocket extends BaseSocket
 
                 SingleU::updateArchiveFriends($Msg);
                 SingleU::checkFriend($Msg); break;*/
-            case 'adding_friends':
+            case 'remove_friend':
 
-                echo "3.adding_friends --- ".$Msg->friend_email."\n";
+                echo "3.adding_friends --- ".$Msg->email."\n";
 
                 SingleU::updateArchiveFriends($Msg);
+
+                SingleU::notifyRemovedFriend($Msg->email_removed);
+
+
+                break;
+
+            case 'adding_friends':
+
+                echo "3.adding_friends --- ".$Msg->email."\n";
+
+                SingleU::updateArchiveFriends($Msg);
+//                SingleU::updateArchiveFriends($Msg);
 
                 break;
 
@@ -83,6 +97,10 @@ class ChatSocket extends BaseSocket
             case 'update':
 
                 echo "1.updateUser ----- $Msg->email \n";
+
+                $singleU = SingleU::getInstance();
+
+                SingleU::checkInFriends($Msg);
 
                 SingleU::updateArchiveFriends($Msg);
 
