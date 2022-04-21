@@ -36,60 +36,43 @@ class ChatSocket extends BaseSocket
 
         $Msg = json_decode($msg);
 
-//        echo  'Msg -> '.$Msg->type."\n";
-//        echo "\n";
-       /* echo gettype($Msg);
-        echo "\n";*/
-//       $i = 4/0;
-
 
         switch($Msg->type){
 
             case 'log':
 
-                echo "0.LOG --- ".$msg."\n";
+//                echo "0.LOG --- "."\n";
 
                 ChatService::saveLog($Msg); break;
 
-            /*case 'removeFriend':
-
-                SingleU::updateArchiveFriends($Msg);
-                SingleU::checkFriend($Msg); break;*/
             case 'remove_friend':
 
-                echo "3.adding_friends --- ".$Msg->email."\n";
+                echo "3.remove_friend --- ".$Msg->email."\n";
 
-                SingleU::updateArchiveFriends($Msg);
 
-                SingleU::notifyRemovedFriend($Msg->email_removed);
+                $singleU = SingleU::getInstance($Msg);
+
+                $singleU->removeFriend();
+
+                $singleU->notifyRemovedFriend();
 
 
                 break;
 
-            case 'adding_friends':
+            case 'add_friends':
 
-                echo "3.adding_friends --- ".$Msg->email."\n";
+                echo "3.add_friends --- ".$Msg->email."\n";
+//                echo "3.add_friends --- ".$msg."\n";
 
-                SingleU::updateArchiveFriends($Msg);
+                $singleU = SingleU::getInstance($Msg);
+
+                $singleU->addFriends();
+
+
+//                SingleU::updateArchiveFriends($Msg);
 //                SingleU::updateArchiveFriends($Msg);
 
                 break;
-
-
-            /* case 'check_friend':
-
-                            echo "2.check_friend --- ".$Msg->friend_email."\n";
-
-                            SingleU::updateArchiveFriends($Msg);
-
-
-                            SingleU::checkFriendToUser($Msg);
-
-
-                            SingleU::checkToFriend($Msg);
-
-                            break;*/
-
 
             case 'interval': echo 'I-';
                 $this->sendArrPersons(); break;
@@ -100,22 +83,17 @@ class ChatSocket extends BaseSocket
 
                 $singleU = SingleU::getInstance($Msg);
 
-                $singleU->checkRemovedInFriends();
-
-                $singleU->updateMapFriends();
+                /*------------------------*/
 
                 $singleU->putUserData($conn);
 
                 $singleU->makeArrPersons();
 
+
                 $singleU->notifyThisUser();
 
+                $singleU->notifyFriends();
 
-                SingleU::notifyThisUser();
-                echo "4\n";
-
-                SingleU::notifyFriends();
-                echo "5\n";
 
                 break;
 
@@ -158,9 +136,9 @@ class ChatSocket extends BaseSocket
 
         $this->Connections->attach($conn);
 
-        echo "New connection 2! ({$conn->resourceId})\n";
+        echo "New connection {$conn->resourceId}\n";
 
-        echo $conn->remoteAddress."\n";
+//        echo $conn->remoteAddress."\n";
 
         /*$singleP = SingleP::getInstance();
 
@@ -182,7 +160,7 @@ class ChatSocket extends BaseSocket
 
         $this->Connections->detach($conn);
 
-        echo "Connection {$conn->resourceId} has disconnected\n";
+//        echo "Connection {$conn->resourceId} has disconnected\n";
 
         SingleU::minusUser($conn);
 

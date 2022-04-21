@@ -89,9 +89,9 @@ class SingleP{
         $this->arrIndexes = $arrIndexes;
     }
 
-    public function setArrUsers($arrUsers){
+    public function setArrUsers($MapUsers){
 
-        $this->arrUsers = $arrUsers;
+        $this->arrUsers = $MapUsers;
 
         /*$arrUsersP = [];
 

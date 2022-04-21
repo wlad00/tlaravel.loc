@@ -3,14 +3,30 @@
 namespace App\Classes\Socket;
 
 use App\Classes\Socket\ChatSocket;
+use Exception;
 use Illuminate\Console\Command;
 
+use Illuminate\Support\Facades\Storage;
 use Ratchet\Http\HttpServer;
 use Ratchet\Server\IoServer;
 use Ratchet\WebSocket\WsServer;
 
 class ChatService
 {
+
+    public static function appendStorage($file,$text){
+
+        try{
+
+            Storage::disk('admin_disk')->append($file, date('d.m.y  H:i:s').'  '.$text
+                .PHP_EOL.PHP_EOL);
+        }
+        catch(Exception $e ){
+
+        }
+
+
+    }
 
     public static function emailByConn($conn,$arrUsers){
         $email = null;
@@ -24,7 +40,7 @@ class ChatService
         return $email;
     }
 
-    public static function getEmailsFriends($arrFriends){
+    /*public static function getEmailsFriends($arrFriends){
         $arrEmails = [];
 
         foreach($arrFriends as $friend){
@@ -33,39 +49,54 @@ class ChatService
         }
 
         return $arrEmails;
-    }
+    }*/
 
 
-    public static function updateFriendsData(&$arrFriends,$arrUsers){
+    /*public static function updateArrFriends(&$singleU){
+//        $emailsFriends = $singleU->objMsg->emailsFriends;
+
+        $MapUsers = $singleU->MapUsers;
+        $arrFriends = $singleU->objMsg->arrFriends;
+        $arrFriendsNew = [];
 
 
-        for($i=0; $i<sizeof($arrFriends); $i++){
+        foreach($arrFriends as $friend){
 
-            $friend = $arrFriends[$i];
-
+            if(!in_array($friend->email,$emailsFriends))
+                                                continue;
 
             if(is_numeric($friend->email)){
 
                 $friend->enable = true;
+
+                array_push($arrFriendsNew,$friend);
+
                 continue;
             }
-
-            if(!isset($arrUsers[$friend->email])){
+            if(!isset($MapUsers[$friend->email])){
 
                 $friend->enable = false;
-//                $friend->block = true;
+
+                array_push($arrFriendsNew,$friend);
+
                 continue;
             }
-
-            $user = $arrUsers[$friend->email];
+            $user = $MapUsers[$friend->email];
 
             $friend->enable = true;
-            $friend->conn = null;
+
             $friend->name = $user->name;
             $friend->rating = $user->rating;
             $friend->block = $user->block;
+
+            array_push($arrFriendsNew,$friend);
         }
-    }
+
+        $singleU->Msg->arrFriends = $arrFriendsNew;
+
+
+
+    }*/
 
     public static function saveLog($Msg){
 
