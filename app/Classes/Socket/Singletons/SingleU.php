@@ -8,17 +8,37 @@ use App\Classes\Socket\ChatService;
 class SingleU{
 
     private $MapUsers = [];
+    private $MapAdmin = [];
+    private $admin = null;
+
     private $user;
-//    private $arrFriends;
     private $Msg;
-//    private $MapFriends = [];
 
     private $arrPersons;
 
-//    private $ArchiveFriends = [];
 
     private static $instance = null;
 
+    /**
+     * SingleU constructor.
+     * @throws \Exception
+     */
+    public function __construct()
+    {
+        $this->makeMapAdmin();
+    }
+
+    /**
+     * @throws \Exception
+     */
+    public function makeMapAdmin(){
+        $singleP = SingleP::getInstance();
+
+        foreach($singleP->arrBots as $bot){
+
+            $this->MapAdmin[$bot->email]=$bot;
+        }
+    }
     /**
      * @param $Msg
      * @return SingleU|null
@@ -37,6 +57,26 @@ class SingleU{
     }
 
     /* 1_ UPDATE */
+
+    /**
+     * @param $conn
+     * @throws \Exception
+     */
+    public static function setAdmin($conn){
+
+        $singleU = static::getInstance(null);
+
+        $singleU->admin = (object)[
+            'conn'=>$conn
+        ];
+
+        $data = ['MapAdmin'=>$singleU->MapAdmin,
+            'type'=>'update_admin'];
+
+        $json = json_encode($data,JSON_UNESCAPED_UNICODE);
+
+        $singleU->admin->conn->send( $json);
+    }
 
     public function putUserData($conn)
     {
@@ -57,6 +97,9 @@ class SingleU{
         $this->MapUsers[$this->Msg->email] = $this->user;
     }
 
+    /**
+     * @throws \Exception
+     */
     public function makeArrPersons(){
 
         $singleP = SingleP::getInstance();
@@ -73,6 +116,10 @@ class SingleU{
 
         $this->checkArrFriends();
 
+        /*ChatService::appendStorage('notify/notify_friends.txt',
+            $this->user->email.' <= '.json_encode($this->user->arrFriends));
+        ChatService::appendStorage('notify/notify_persons.txt',$this->user->email.' <= '.json_encode($this->arrPersons));*/
+
         $data = ['arrPersons'=>$this->arrPersons,
             'arrFriends'=>$this->user->arrFriends,
             'type'=>'notify'];
@@ -86,30 +133,15 @@ class SingleU{
 
     public function notifyFriends(){
 
-        //3 Friends
+
         foreach($this->user->arrFriends as $friend){
 
-            if(!isset($this->MapUsers[$friend->email])) continue;
-
-            /* get friend from MapUsers*/
+            if(!isset($this->MapUsers[$friend->email]))
+                                                continue;
 
             $this->user = $this->MapUsers[$friend->email];
 
             $this->notifyThisUser();
-
-            /*$this->checkArrFriends($user);
-
-            $data = ['arrPersons'=>$this->arrPersons,
-                'arrFriends'=>$this->user->arrFriends,
-                'type'=>'notify'];
-
-            $json = json_encode($data,JSON_UNESCAPED_UNICODE);
-
-
-
-            //2 this User
-
-            $user->conn->send( $json);*/
 
         }
 
@@ -120,7 +152,6 @@ class SingleU{
 
     private function checkArrFriends(){
 
-//        $emailsFriends = [];
         $arrFriendsNew = [];
         $user_email = $this->user->email;
 
@@ -152,7 +183,6 @@ class SingleU{
             //5
             if(sizeof($in_array)>0){
 
-                ChatService::appendStorage('notify/notify_friends.txt','in_array>0');
                 $friend->name = $friendOrigin->name;
                 $friend->rating = $friendOrigin->rating;
                 $friend->block = $friendOrigin->block;
@@ -160,10 +190,6 @@ class SingleU{
                 array_push($arrFriendsNew,$friend);
             }
         }
-
-        ChatService::appendStorage('notify/notify_friends.txt',
-            $this->user->email.' <= '.
-            json_encode($arrFriendsNew,JSON_UNESCAPED_UNICODE));
 
         //6
         $this->user->arrFriends = $arrFriendsNew;
@@ -187,7 +213,7 @@ class SingleU{
             if($Msg->TypeStep == 'text'){
 
                 $Msg->email_bot = $Msg->email_to;
-                $Msg->email_to = 'wladsliw@list.ru';
+                $Msg->email_to = 'admin@www.www';
             }
 
 
@@ -198,13 +224,21 @@ class SingleU{
                 $Msg->email_to = $Msg->email_from;
                 $Msg->email_from = $email_bot;
 
-                echo "sleep 5 sec-------------\n";
+                if($Msg->InviteMode === 'InvitePerson'){
+
+                    if(!isset($U->MapAdmin[$email_bot]))
+                        $U->MapAdmin[$email_bot] = [];
+
+                    array_push($U->MapAdmin,$U->MapUsers[$Msg->email_to]);
+
+
+                }
 
                 sleep(5);
             }
 
         }
-//        echo  json_encode($U->arrUsers)."\n";
+
 
         if(!isset($U->MapUsers[$Msg->email_to]))
                                             return;
@@ -234,13 +268,7 @@ class SingleU{
         }
         $U->user = $U->MapUsers[$email];
 
-//        echo 'minusUser ->'."\n";
-
-//        $U->user->arrFriends = $U->MapUsers[$email]->arrFriends;
-
         unset($U->MapUsers[$email]);
-
-//        echo json_encode($U->user,JSON_UNESCAPED_UNICODE)."\n";
 
         $U->notifyFriends();
     }
@@ -268,127 +296,25 @@ class SingleU{
 
     public function addFriends(){
 
-//        echo $this->Msg."\n";
-
         $user = $this->MapUsers[$this->Msg->email];
-//        echo "1\n";
-        $friend = $this->MapUsers[$this->Msg->friend_email];
-//        echo "2\n";
+
+        if(is_numeric($this->Msg->friend_email))
+
+           $friend = $this->MapAdmin[$this->Msg->friend_email];
+
+        else
+
+            $friend = $this->MapUsers[$this->Msg->friend_email];
+
 
         array_push($user->arrFriends,$friend);
-//        echo "3\n";
         array_push($friend->arrFriends,$user);
-//        echo "4\n";
+
+        Person::updateBot($friend);
+
 
     }
 
-
-    /**
-     * @param $Msg
-     * @throws \Exception
-     */
-    /*public static function updateArchiveFriends(&$Msg){
-
-        $U = static::getInstance();
-
-        $U->ArchiveFriends[$Msg->email] = ChatService::getEmailsFriends($Msg->arrFriends);
-
-    }*/
-
-
-
-
-    /**
-     *
-     * @throws \Exception
-     */
-    /*public function removeIndex(){
-
-        $size = sizeof($this->arrIndexes);
-
-        if($size == 5) $this->addIndex();
-
-        if($size <=5) return;
-
-        $rand = random_int(0,$size-1);
-
-//        unset($this->arrIndexes[$rand]);
-
-        array_splice($this->arrIndexes, $rand, 1);
-    }*/
-
-    /**
-     * @throws \Exception
-     */
-    /*public function addIndex(){
-
-        $size = sizeof($this->arrIndexes);
-
-        if($size==10) $this->removeIndex();
-
-        if($size>=10) return;
-
-        $size = sizeof(CONSTANT::ARR_BOTS)-1;
-
-        $rand = random_int(0,$size);
-
-        if(in_array($rand,$this->arrIndexes)) return;
-
-        array_push($this->arrIndexes,$rand);
-    }*/
-
-
-
-
-    /**
-     * @throws \Exception
-     */
-    /*private function makeArrIndexes(){
-
-        $arrBots = CONSTANT::ARR_BOTS;
-        $arrIndexes = [];
-
-        for($i=0; $i<5; $i++){
-
-            $size = sizeof($arrBots)-1;
-
-            $rand = random_int(0, $size);
-
-            if(in_array($rand,$arrIndexes))
-                $i--;
-            else
-                array_push($arrIndexes,$rand);
-        }
-
-        $this->arrIndexes = $arrIndexes;
-    }*/
-
-    /*private function makeArrPersons(){
-
-        $arrBots = CONSTANT::ARR_BOTS;
-        $arrPersons = [];
-
-        foreach($this->arrIndexes as $ind){
-
-            array_push($arrPersons,$arrBots[$ind]);
-        }
-
-        $this->arrPersons = $arrPersons;
-
-    }*/
-
-    /*--------------------------------*/
-
-    /*public function getArrPersons(){
-
-        $this->makeArrPersons();
-
-        return $this->arrPersons;
-    }
-    public function getArrIndexes(){
-
-        return $this->arrIndexes;
-    }*/
 
 
 

@@ -4,9 +4,11 @@ namespace App\Classes\Socket\Singletons;
 
 
 use App\CONSTANT;
+use App\Models\Person;
 
 class SingleP{
 
+    public $arrBots;
     private $arrPersons = [],$arrIndexes=[];
     private $arrUsers = [];
 
@@ -19,7 +21,17 @@ class SingleP{
     {
         $this->makeArrIndexes();
 
-//        $this->makeArrPersons();
+        $this->arrBots = Person::where('id','<',10)->get();
+
+//        sizeof($this->arrBots);
+       /* $this->arrBots = array_slice($this->arrBots,0,3);
+
+        $this->arrBots = (object)$this->arrBots;*/
+
+    }
+
+    public static function readArrPersons(){
+
 
 
     }
@@ -64,19 +76,20 @@ class SingleP{
     }
 
 
-
-
     /**
      * @throws \Exception
      */
     private function makeArrIndexes(){
 
-        $arrBots = CONSTANT::ARR_BOTS;
+        $this->arrIndexes = [0,1,2,3,4];
+                                    return;
+
+        $size = sizeof($this->arrBots)-1;
+
         $arrIndexes = [];
 
         for($i=0; $i<5; $i++){
 
-            $size = sizeof($arrBots)-1;
 
             $rand = random_int(0, $size);
 
@@ -89,31 +102,25 @@ class SingleP{
         $this->arrIndexes = $arrIndexes;
     }
 
+
     public function setArrUsers($MapUsers){
 
         $this->arrUsers = $MapUsers;
 
-        /*$arrUsersP = [];
-
-        foreach($arrUsers as $user){
-
-            array_push($arrUsersP,
-                [$user->name,$user->rating,$user->email]);
-        }
-
-        $this->arrUsers = $arrUsersP;*/
     }
+
 
     private function makeArrPersons(){
 
-        $arrBots = CONSTANT::ARR_BOTS;
+//        $arrBots = CONSTANT::ARR_BOTS;
+
         $arrPersons = [];
 
         foreach($this->arrIndexes as $ind){
 
-            $arrBots[$ind]['enable']=true;
+            $this->arrBots[$ind]['enable']=true;
 
-            array_push($arrPersons,$arrBots[$ind]);
+            array_push($arrPersons,$this->arrBots[$ind]);
         }
 
         $this->arrPersons = $arrPersons;
