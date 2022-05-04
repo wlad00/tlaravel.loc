@@ -71,7 +71,11 @@ class ChatSocket extends BaseSocket
 
                 $singleU = SingleU::getInstance($Msg);
 
+//                $singleU->addUserFriend();
+
                 $singleU->addFriends();
+
+                $singleU->updateBot($Msg->friend_email);
 
 
 //                SingleU::updateArchiveFriends($Msg);
@@ -86,7 +90,11 @@ class ChatSocket extends BaseSocket
 
                 echo "1.updateAdmin ----- $Msg->email \n";
 
-                SingleU::setAdmin($conn);
+                $singleU = SingleU::getInstance($Msg);
+
+                $singleU->setAdmin($conn);
+                $singleU->notifyAdmin();
+
                 break;
 
             case 'update':

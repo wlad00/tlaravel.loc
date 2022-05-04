@@ -4,7 +4,7 @@ namespace App\Classes\Socket\Singletons;
 
 
 use App\CONSTANT;
-use App\Models\Person;
+use App\Models\Bot;
 
 class SingleP{
 
@@ -21,7 +21,7 @@ class SingleP{
     {
         $this->makeArrIndexes();
 
-        $this->arrBots = Person::where('id','<',10)->get();
+        $this->arrBots = Bot::where('id','<',10)->get();
 
 //        sizeof($this->arrBots);
        /* $this->arrBots = array_slice($this->arrBots,0,3);
