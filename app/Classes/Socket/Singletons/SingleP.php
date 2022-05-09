@@ -3,14 +3,19 @@
 namespace App\Classes\Socket\Singletons;
 
 
+use App\Classes\Socket\ChatService;
 use App\CONSTANT;
 use App\Models\Bot;
 
 class SingleP{
 
-    public $arrBots;
+    private $AllBots=[];
+    public $arrBots=[];
+
+    private $MapPersons = [];
+
     private $arrPersons = [],$arrIndexes=[];
-    private $arrUsers = [];
+    private $MapUsers = [];
 
     private static $instance = null;
     /**
@@ -19,20 +24,11 @@ class SingleP{
      */
     public function __construct()
     {
+
+        $this->AllBots = Bot::where('id','<',10)->get(['email','name','rating'])->toArray();
+
+
         $this->makeArrIndexes();
-
-        $this->arrBots = Bot::where('id','<',10)->get();
-
-//        sizeof($this->arrBots);
-       /* $this->arrBots = array_slice($this->arrBots,0,3);
-
-        $this->arrBots = (object)$this->arrBots;*/
-
-    }
-
-    public static function readArrPersons(){
-
-
 
     }
 
@@ -105,36 +101,85 @@ class SingleP{
 
     public function setArrUsers($MapUsers){
 
-        $this->arrUsers = $MapUsers;
+        $this->MapUsers = $MapUsers;
 
     }
 
 
-    private function makeArrPersons(){
+    /*public function randomArrBots(){
 
-//        $arrBots = CONSTANT::ARR_BOTS;
-
-        $arrPersons = [];
+        $arrBots = [];
 
         foreach($this->arrIndexes as $ind){
 
-            $this->arrBots[$ind]['enable']=true;
+            $this->AllBots[$ind]['enable']=true;
 
-            array_push($arrPersons,$this->arrBots[$ind]);
+            array_push($arrBots,(object)$this->AllBots[$ind]);
         }
 
-        $this->arrPersons = $arrPersons;
+        $this->arrBots = $arrBots;
 
-    }
+        ChatService::echo_arr($arrBots,'/$arrBots---');
+
+    }*/
 
     /*--------------------------------*/
 
-    public function getArrPersons(){
+    /*public function newBotsToPersons(){
 
-        $this->makeArrPersons();
 
-        return array_merge($this->arrPersons,$this->arrUsers) ;
+        foreach($this->arrBots as $bot){
+
+            if(!isset($this->MapPersons[$bot->email]))
+                        $this->MapPersons[$bot->email]=$bot;
+        }
     }
+    public function newUsersToPersons(){
+
+        foreach($this->MapUsers as $email=>$user){
+
+            if(!isset($this->MapPersons[$email]))
+                    $this->MapPersons[$email]=$user;
+        }
+
+
+    }*/
+    public function makeArrPersons(){
+
+        $arrPersons = [];
+
+        foreach($this->MapUsers as $email=>$user){
+
+            if(!$user->block)
+                    array_push($arrPersons,$user);
+        }
+    }
+    /*public function removeBlockedPersons(){
+
+
+        ChatService::echo_arr($this->MapPersons,'/MapPersons--------');
+        ChatService::echo_arr($this->MapUsers,'/MapUsers--------');
+
+        foreach($this->MapPersons as $email=>$person){
+
+            if($this->MapUsers[$email]->block)
+                unset($this->MapPersons[$email]);
+
+        }
+
+    }*/
+
+    /**
+     * @return array
+     * @throws \Exception
+     */
+    public static function getMapPersons(){
+
+        $selfP = self::getInstance();
+
+        return $selfP->MapPersons;
+    }
+
     public function getArrIndexes(){
 
         return $this->arrIndexes;

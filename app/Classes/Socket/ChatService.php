@@ -10,9 +10,54 @@ use Illuminate\Support\Facades\Storage;
 use Ratchet\Http\HttpServer;
 use Ratchet\Server\IoServer;
 use Ratchet\WebSocket\WsServer;
+use Symfony\Component\Filesystem\Exception\FileNotFoundException;
 
 class ChatService
 {
+    private static function echo_line($elem){
+
+        foreach($elem as $key=>$item)
+
+            if(gettype($item)=='string' || gettype($item)=='integer'|| gettype($item)=='boolean')
+                echo $key.'=>'.$item.', ';
+            else
+                echo $key.'=> array(...) ';
+//                echo json_encode($item);
+        echo "\n";
+    }
+
+    /**
+     * @param $file
+     * @return mixed
+     * @throws \Illuminate\Contracts\Filesystem\FileNotFoundException
+     */
+    public static function readStorage($file){
+
+
+        try {
+            $json = Storage::disk('admin_disk')->get($file);
+        } catch (FileNotFoundException $e) {
+            $json = (object)[];
+        }
+
+        return json_decode($json);
+
+    }
+
+    /**
+     * @param $arr
+     * @param $name_arr
+     */
+    public static function echo_arr($arr, $name_arr){
+        echo $name_arr." => \n";
+
+        foreach($arr as $elem){
+
+                self::echo_line($elem);
+
+        }
+    }
+
 
     public static function appendStorage($file,$text){
 
@@ -39,8 +84,19 @@ class ChatService
 
         return $email;
     }
+    public static function getFriendForArr($friendOrigin){
 
-    /*public static function getEmailsFriends($arrFriends){
+        $newFriend = (object)[];
+        $newFriend->email = $friendOrigin->email;
+        $newFriend->name = $friendOrigin->name;
+        $newFriend->rating = $friendOrigin->rating;
+        $newFriend->block = $friendOrigin->block;
+        $newFriend->enable = true;
+
+        return $newFriend;
+    }
+
+    public static function getEmailsFriends($arrFriends){
         $arrEmails = [];
 
         foreach($arrFriends as $friend){
@@ -49,7 +105,7 @@ class ChatService
         }
 
         return $arrEmails;
-    }*/
+    }
 
 
     /*public static function updateArrFriends(&$singleU){

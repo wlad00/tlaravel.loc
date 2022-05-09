@@ -8,15 +8,15 @@ use App\Models\Bot;
 
 class SingleU{
 
-    private $MapUsers = [];
-    private $MapAdmin = [];
-    private $admin = null;
+    public $MapUsers = [];
 
-    private $user;
-    private $Msg;
-//    private $type
+    public $admin = null;
 
-    private $arrPersons;
+    public $MapAdmin = [];
+
+    public $arrPersons =[];
+
+    public $user;
 
 
     private static $instance = null;
@@ -27,344 +27,233 @@ class SingleU{
      */
     public function __construct()
     {
-        $this->makeMapAdmin();
+
+//        $this->makeMapAdmin();
     }
 
     /**
      * @throws \Exception
      */
-    public function makeMapAdmin(){
+    /*public function makeMapAdmin(){
         $singleP = SingleP::getInstance();
+
 
         foreach($singleP->arrBots as $bot){
 
-            $bot->arrFriends = json_decode($bot->arr_friends);
-
-            unset($bot->arr_friends);
-
-            $this->MapAdmin[$bot->email]=$bot;
+            $this->MapAdmin[$bot['email']]=$bot;
         }
-    }
+
+    }*/
     /**
      * @param $Msg
      * @return SingleU|null
      * @throws \Exception
      */
-    public static function getInstance($Msg)
+    public static function getInstance(/*$Msg*/)
     {
         if (self::$instance == null)
         {
             self::$instance = new static();
         }
 
-        self::$instance->Msg = $Msg;
-
         return self::$instance;
+    }
+
+    public function makeArrPersons(){
+
+        $arrPersons = [];
+
+        foreach($this->MapUsers as $email=>$user){
+
+            if(!$user->block)
+                array_push($arrPersons,$user);
+        }
+
+        $this->arrPersons = $arrPersons;
+    }
+
+    /**
+     * @param $conn
+     * @param $Msg
+     * @throws \Exception
+     */
+    public function putUserData($conn, $Msg){
+
+//        $selfU = self::getInstance();
+
+
+        $this->user = (object)[
+
+            'enable' => true,
+            'conn' => $conn,
+            'arrFriends' => $Msg->arrFriends,
+
+            'name' => $Msg->name,
+            'email' => $Msg->email,
+
+            'rating' => $Msg->rating,
+            'block' => $Msg->block
+        ];
+
+        $this->MapUsers[$Msg->email] = $this->user;
     }
 
     /* 1_ UPDATE */
 
     public function setAdmin($conn){
 
-
         $this->admin = (object)[
             'conn'=>$conn
         ];
-
     }
-    public function notifyAdmin(){
 
-        $data = ['MapAdmin'=>$this->MapAdmin,
-            'type'=>'update_admin'];
+    /**
+     * @throws \Illuminate\Contracts\Filesystem\FileNotFoundException
+     */
+    public function putBotsToArrUsers(){
+
+        $objConfig = ChatService::readStorage('config.txt');
+
+        $num_bots = $objConfig->num_bots;
+
+        $AllBots = Bot::where('id','<=',$num_bots)->get(['email','name','rating','arr_friends','block'])->toArray();
+
+
+//        ChatService::echo_arr($AllBots,'/AllBots----');
+
+        for($i=0;$i<$num_bots;$i++){
+
+            $bot = $AllBots[$i];
+            $bot['arrFriends']=json_decode($bot['arr_friends']);
+            unset($bot['arr_friends']);
+
+            $this->MapUsers[$bot['email']]=(object)$bot;
+        }
+    }
+
+
+
+    public function responseAdmin(){
+
+        $data = ['MapUsers'=>$this->MapUsers,
+            'type'=>'response_admin'];
 
         $json = json_encode($data,JSON_UNESCAPED_UNICODE);
 
         $this->admin->conn->send( $json);
     }
 
-    public function putUserData($conn)
-    {
 
-        $this->user = (object)[
-
-            'enable' => true,
-            'conn' => $conn,
-            'arrFriends' => $this->Msg->arrFriends,
-
-            'name' => $this->Msg->name,
-            'email' => $this->Msg->email,
-
-            'rating' => $this->Msg->rating,
-            'block' => $this->Msg->block
-        ];
-
-        $this->MapUsers[$this->Msg->email] = $this->user;
-    }
 
     /**
      * @throws \Exception
      */
-    public function makeArrPersons(){
+    /*public function makeArrPersons(){
+
+//        echo "000\n";
+
+//        $singleU = self::getInstance();
+//
+//        $singleP = SingleP::getInstance();
+
+
+//        echo "1\n";
+
+        $singleP->setArrUsers($singleU->MapUsers);
+
+//        echo "2\n";
+
+        $singleU->arrPersons = $singleP->getArrPersons();
+
+//        ChatService::echo_arr($singleU->arrPersons->toArray(),'arrPersons');
+    }*/
+
+    /**
+     * @param $Msg
+     * @throws \Exception
+     */
+    public static function removeFriend($Msg){
+
+        $singleU = self::getInstance();
+
+        $user = $singleU->MapUsers[$Msg->email];
+
+        $user->arrFriends = array_filter($user->arrFriends, function($friend) use($Msg) {
+            return $friend->email != $Msg->email_removed;
+        });
+    }
+
+    /**
+     * @param $Msg
+     * @throws \Exception
+     */
+    public static function addFriends($Msg)
+    {
+        $singleU = self::getInstance();
+
+        /* get Friend */
+
+        $friendOrigin = $singleU->MapUsers[$Msg->friend_email];
+        $newFriend = ChatService::getFriendForArr($friendOrigin);
+
+        /* get User */
+
+
+        $userOrigin = $singleU->MapUsers[$Msg->email];
+        $newUser = ChatService::getFriendForArr($userOrigin);
+
+
+        array_push($userOrigin->arrFriends,$newFriend);
+        array_push($friendOrigin->arrFriends,$newUser);
+    }
+
+
+
+
+    /*public function removeAllBots(){
+
+        foreach ( $this->MapUsers as $email => $value ) {
+            if ( is_numeric($email) ) {
+                unset($this->MapUsers[$email]);
+            }
+        }
+    }*/
+
+    /**
+     * @throws \Exception
+     */
+   /* public function makeArrPersons(){
+
 
         $singleP = SingleP::getInstance();
 
         $singleP->setArrUsers($this->MapUsers);
 
         $this->arrPersons = $singleP->getArrPersons();
+    }*/
 
-    }
+    /*public function notifyBots($arrBotMails){
 
 
+        if(!$this->admin)
+            return;
 
-    public function notifyThisUser(){
+        $arrBots = [];
 
-        $this->checkArrFriends();
+        foreach($arrBotMails as $bot_email){
+
+            array_push($arrBots,$this->MapUsers[$bot_email]);
+        }
 
         $data = ['arrPersons'=>$this->arrPersons,
-            'arrFriends'=>$this->user->arrFriends,
+            'arrBots'=>$arrBots,
             'type'=>'notify'];
 
         $json = json_encode($data,JSON_UNESCAPED_UNICODE);
 
-        $this->user->conn->send( $json);
-    }
-
-
-
-    public function notifyFriends(){
-
-
-        foreach($this->user->arrFriends as $friend){
-
-            if(!isset($this->MapUsers[$friend->email]))
-                                                continue;
-
-            $this->user = $this->MapUsers[$friend->email];
-
-            $this->notifyThisUser();
-
-        }
-
-    }
-
-
-    /* 1_ PRIVATE UPDATE */
-
-    private function checkArrFriends(){
-
-        $arrFriendsNew = [];
-        $user_email = $this->user->email;
-
-        //0
-        foreach($this->user->arrFriends as $friend){
-
-            //1
-            if(is_numeric($friend->email)){
-
-                $friend->enable = true;
-                array_push($arrFriendsNew,$friend);
-                continue;
-            }
-            //2
-            if(!isset($this->MapUsers[$friend->email])){
-
-                $friend->enable = false;
-                array_push($arrFriendsNew,$friend);
-                continue;
-            }
-            //3
-            $friendOrigin =  $this->MapUsers[$friend->email];
-
-            //4
-            $in_array = array_filter($friendOrigin->arrFriends, function($friend)use ($user_email) {
-                return $friend->email == $user_email;
-            });
-
-            //5
-            if(sizeof($in_array)>0){
-
-                $newFriend = $this->getFriendForArr($friendOrigin);
-
-               /* $friend->name = $friendOrigin->name;
-                $friend->rating = $friendOrigin->rating;
-                $friend->block = $friendOrigin->block;
-                $friend->enable = true;
-                array_push($arrFriendsNew,$friend);*/
-
-                array_push($arrFriendsNew,$newFriend);
-            }
-        }
-
-        //6
-        $this->user->arrFriends = $arrFriendsNew;
-
-        //7
-        $this->MapUsers[$this->user->email] = $this->user;
-    }
-    private function getFriendForArr($friendOrigin){
-
-        $newFriend = (object)[];
-        $newFriend->name = $friendOrigin->name;
-        $newFriend->rating = $friendOrigin->rating;
-        $newFriend->block = $friendOrigin->block;
-        $newFriend->enable = true;
-
-        return $newFriend;
-    }
-
-
-        /**
-     * @param $Msg
-     * @throws \Exception
-     */
-    public static function sendMsg($Msg){
-
-        $U = static::getInstance($Msg);
-
-        if(is_numeric($Msg->email_to)){
-
-
-            if($Msg->TypeStep == 'text'){
-
-                $Msg->email_bot = $Msg->email_to;
-                $Msg->email_to = 'admin@www.www';
-            }
-
-
-            if($Msg->TypeStep == '1_invite'){
-
-                $Msg->TypeStep = '3_agree';
-                $email_bot = $Msg->email_to;
-                $Msg->email_to = $Msg->email_from;
-                $Msg->email_from = $email_bot;
-
-                if($Msg->InviteMode === 'InvitePerson'){
-
-                    if(!isset($U->MapAdmin[$email_bot]))
-                        $U->MapAdmin[$email_bot] = [];
-
-                    array_push($U->MapAdmin,$U->MapUsers[$Msg->email_to]);
-
-
-                }
-
-                sleep(5);
-            }
-
-        }
-
-
-        if(!isset($U->MapUsers[$Msg->email_to]))
-                                            return;
-
-        $conn = $U->MapUsers[$Msg->email_to]->conn;
-
-        $conn->send( json_encode(
-                $Msg
-            )
-        );
-    }
-
-
-    /**
-     * @param $conn
-     * @throws \Exception
-     */
-    public static function minusUser($conn){
-
-        $U = static::getInstance(null);
-
-        $email = ChatService::emailByConn($conn,$U->MapUsers);
-
-        if(!$email){
-            echo "-- disconnect VISITOR --\n" ;
-            return;
-        }
-        $U->user = $U->MapUsers[$email];
-
-        unset($U->MapUsers[$email]);
-
-        $U->notifyFriends();
-    }
-
-
-
-    public function removeFriend(){
-
-        $user = $this->MapUsers[$this->Msg->email];
-
-        $user->arrFriends = array_filter($user->arrFriends, function($friend) {
-            return $friend->email != $this->Msg->email_removed;
-        });
-    }
-
-    public function notifyRemovedFriend(){
-
-        if(!isset($this->MapUsers[$this->Msg->email_removed]))
-                                                        return;
-
-        $this->user = $this->MapUsers[$this->Msg->email_removed];
-
-        $this->notifyThisUser();
-    }
-
-    public function updateBot($botEmail){
-
-        if (is_numeric($botEmail))
-                               return;
-
-        $botOrigin = $this->MapAdmin[$botEmail];
-
-        $bot = Bot::where('email', $botEmail)->first();
-
-        $bot->update([
-            'rating'=>$botOrigin->rating,
-            'arr_friends'=>json_encode($botOrigin->arrFriends,JSON_UNESCAPED_UNICODE)
-        ]);
-
-        $this->notifyAdmin();
-    }
-
-    public function addFriends()
-    {
-        /* get Friend */
-
-        if (is_numeric($this->Msg->friend_email))
-            $friendOrigin = $this->MapAdmin[$this->Msg->friend_email];
-        else
-            $friendOrigin = $this->MapUsers[$this->Msg->friend_email];
-
-        $newFriend = $this->getFriendForArr($friendOrigin);
-
-        /* get User */
-
-
-        $userOrigin = $this->MapUsers[$this->Msg->email];
-        $newUser = $this->getFriendForArr($userOrigin);
-
-
-        array_push($userOrigin->arrFriends,$newFriend);
-        array_push($friendOrigin->arrFriends,$newUser);
-    }
-
-    /*public function addUserFriend(){
-
-        if(is_numeric($this->Msg->friend_email))
-                                            return;
-
-        $userOrigin = $this->MapUsers[$this->Msg->email];
-        $newUser = $this->getFriendForArr($userOrigin);
-
-
-        $friendOrigin = $this->MapUsers[$this->Msg->friend_email];
-        $newFriend = $this->getFriendForArr($friendOrigin);
-
-
-        array_push($userOrigin->arrFriends,$newFriend);
-        array_push($friendOrigin->arrFriends,$newUser);
+        $this->admin->conn->send( $json);
 
     }*/
-
 
 
 

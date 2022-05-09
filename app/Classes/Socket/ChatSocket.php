@@ -12,6 +12,10 @@ namespace App\Classes\Socket;
 use App\Classes\Socket\Singletons\SingleP;
 use App\Classes\Socket\Singletons\SingleU;
 use App\Classes\Socket\Base\BaseSocket;
+use App\Classes\Socket\Workers\WorkerAdd;
+use App\Classes\Socket\Workers\WorkerRemove;
+use App\Classes\Socket\Workers\WorkerSend;
+use App\Classes\Socket\Workers\WorkerUpdate;
 use App\CONSTANT;
 use App\Models\Person;
 use Ratchet\ConnectionInterface;
@@ -34,9 +38,14 @@ class ChatSocket extends BaseSocket
 
         echo 'server start----2-----';
 
-       SingleP::readArrPersons();
+//       SingleP::readArrPersons();
     }
 
+    /**
+     * @param ConnectionInterface $conn
+     * @param string $msg
+     * @throws \Exception
+     */
     public function onMessage(ConnectionInterface $conn, $msg) {
 
         $Msg = json_decode($msg);
@@ -54,12 +63,21 @@ class ChatSocket extends BaseSocket
 
                 echo "3.remove_friend --- ".$Msg->email."\n";
 
+//                $worker = new WorkerRemove($Msg);
 
-                $singleU = SingleU::getInstance($Msg);
+//                $worker->removeFriend();
 
-                $singleU->removeFriend();
+                SingleU::removeFriend($Msg);
 
-                $singleU->notifyRemovedFriend();
+                /*-----------------------------*/
+
+                $worker = new WorkerUpdate($Msg);
+
+                $worker->notifyRemovedFriend();
+
+                $worker->setBotEmails([$Msg->email_removed]);
+
+                $worker->notifyBots();
 
 
                 break;
@@ -67,66 +85,80 @@ class ChatSocket extends BaseSocket
             case 'add_friends':
 
                 echo "3.add_friends --- ".$Msg->email."\n";
-//                echo "3.add_friends --- ".$msg."\n";
 
-                $singleU = SingleU::getInstance($Msg);
+//                $worker = new WorkerAdd();
 
-//                $singleU->addUserFriend();
+                SingleU::addFriends($Msg);
 
-                $singleU->addFriends();
+                /*--------------------------------*/
 
-                $singleU->updateBot($Msg->friend_email);
+                $worker = new WorkerUpdate($Msg);
 
+                $worker->setBotEmails([$Msg->friend_email,$Msg->email]);
 
-//                SingleU::updateArchiveFriends($Msg);
-//                SingleU::updateArchiveFriends($Msg);
+                $worker->notifyBots();
+
 
                 break;
 
             case 'interval': echo 'I-';
                 $this->sendArrPersons(); break;
 
-            case 'update_admin':
+            case 'login_admin':
 
-                echo "1.updateAdmin ----- $Msg->email \n";
+                echo "1.login_admin --11--- $Msg->email \n";
 
-                $singleU = SingleU::getInstance($Msg);
+                $singleU = SingleU::getInstance();
 
+//                echo "1\n";
                 $singleU->setAdmin($conn);
-                $singleU->notifyAdmin();
+//                echo "2\n";
+                $singleU->putBotsToArrUsers();
+//                echo "3\n";
+                $singleU->responseAdmin();
+//                echo "4\n";
 
                 break;
 
             case 'update':
 
-                echo "1.updateUser ----- $Msg->email \n";
-
-                $singleU = SingleU::getInstance($Msg);
-
-                /*------------------------*/
-               /* if($Msg->email === 'admin@www.www'){
+                echo "1.update ----- $Msg->email \n";
 
 
+                $singleU = SingleU::getInstance();
 
-                    break;
-                 }*/
-
-
-                $singleU->putUserData($conn);
+                $singleU->putUserData($conn,$Msg);
 
                 $singleU->makeArrPersons();
 
+                /*--------------------------------*/
 
-                $singleU->notifyThisUser();
 
-                $singleU->notifyFriends();
+                $worker = new WorkerUpdate($Msg);
 
+                $worker->setThisUser();
+//                echo "2\n";
+                $worker->notifyThisUser();
+//                echo "3\n";
+                $worker->notifyFriends();
+//                echo "4\n";
+                $worker->notifyBots();
 
                 break;
 
             case 'send':
-                SingleU::sendMsg($Msg);
+                $worker = new WorkerSend($Msg);
 
+//                $worker->sendMsg();
+
+                $worker->sendToUser();
+
+                $worker->sendToBot();
+
+                $worker->returnAgreeBot();
+
+
+//                $worker->sendInviteGame();
         }
 
     }
@@ -174,7 +206,9 @@ class ChatSocket extends BaseSocket
 
         $this->Connections->detach($conn);
 
-        SingleU::minusUser($conn);
+        $worker = new WorkerUpdate(null);
+
+        $worker->minusUser($conn);
 
     }
 
