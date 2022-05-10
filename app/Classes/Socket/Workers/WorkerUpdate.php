@@ -81,16 +81,18 @@ class WorkerUpdate
 
     public function notifyThisUser(){
 
-//        echo "11\n";
+        echo "/notifyThisUser".$this->user->email."\n";
         $this->checkArrFriends();
 
-//        echo "12\n";
+        echo "12\n";
+
         if(is_numeric($this->user->email)) {
 
             array_push($this->arrBotMails,$this->user->email);
             return;
         }
 //        echo "1\n";
+        echo "13\n";
 
         $data = [
 //            'mapPersons'=> SingleP::getMapPersons(),
@@ -111,6 +113,8 @@ class WorkerUpdate
 
 //        echo json_encode($this->MapUsers)."\n";
 
+        echo "/notifyFriends-----";
+
 
         foreach($this->user->arrFriends as $friend){
 
@@ -124,6 +128,56 @@ class WorkerUpdate
             $this->notifyThisUser();
 
         }
+    }
+
+
+
+    public function notifyAll(){
+
+
+        echo "/notifyAll----\n";
+
+        $this->notifyAdmin();
+
+//        ChatService::echo_arr($this->singleU->MapUsers,'/MapUsers--------');
+
+
+        foreach($this->singleU->MapUsers as $email=>$friend){
+
+            if(is_numeric($email))
+                                    continue;
+
+            $this->user = $this->singleU->MapUsers[$email];
+
+//            echo 'user to notify -> '.$this->user->email."\n";
+
+            $this->notifyThisUser();
+
+        }
+    }
+    public function notifyAdmin(){
+
+        if(!isset($this->singleU->admin))
+            return;
+
+        $ArrBots = [];
+
+        foreach($this->singleU->MapUsers as $user){
+
+            $clone_user = clone $user;
+            unset($clone_user->conn);
+            array_push($ArrBots,$clone_user);
+        }
+
+
+        $data = [
+
+            'ArrBots'=>$ArrBots,
+            'type'=>'response_admin'];
+
+        $json = json_encode($data,JSON_UNESCAPED_UNICODE);
+
+        $this->admin->conn->send( $json);
     }
 
 
@@ -172,13 +226,25 @@ class WorkerUpdate
 
         $singleU = SingleU::getInstance();
 
+
+        /* Exit Admin */
+
+
         if($singleU->admin->conn->resourceId === $conn->resourceId){
 
             $singleU->admin = null;
 
+            $singleU->removeAllBots();
+
+            $singleU->makeArrPersons();
+
+            $this->notifyAll();
+
             return;
-//            $singleU->removeAllBots();
         }
+
+        /* Exit Visitor */
+
 
         $email = ChatService::emailByConn($conn,$singleU->MapUsers);
 
@@ -186,11 +252,24 @@ class WorkerUpdate
             echo "-- disconnect VISITOR --\n" ;
             return;
         }
+
+        /* Remove User */
+
+
         $this->user = $singleU->MapUsers[$email];
 
         unset($singleU->MapUsers[$email]);
 
-        $this->notifyFriends();
+        $singleU->makeArrPersons();
+
+
+        /* Notify */
+
+
+        if($this->user->block)
+            $this->notifyFriends();
+        else
+            $this->notifyAll();
     }
 
     /* 1_ PRIVATE UPDATE */

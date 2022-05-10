@@ -110,13 +110,13 @@ class ChatSocket extends BaseSocket
 
                 $singleU = SingleU::getInstance();
 
-//                echo "1\n";
                 $singleU->setAdmin($conn);
-//                echo "2\n";
+
                 $singleU->putBotsToArrUsers();
-//                echo "3\n";
-                $singleU->responseAdmin();
-//                echo "4\n";
+
+                $notify = new WorkerUpdate($Msg);
+
+                $notify->notifyAll();
 
                 break;
 
@@ -135,6 +135,12 @@ class ChatSocket extends BaseSocket
 
 
                 $worker = new WorkerUpdate($Msg);
+
+                if(!$Msg->block){
+                    $worker->notifyAll();
+                    break;
+                }
+
 
                 $worker->setThisUser();
 //                echo "2\n";

@@ -75,13 +75,19 @@ class ChatService
 
     public static function emailByConn($conn,$arrUsers){
         $email = null;
+//        echo "1\n";
+
+//        static::echo_arr($arrUsers,'/arrUsers----');
 
         foreach($arrUsers as $user){
+//            echo 'email => '.$user->email."\n";
+
+            if(!isset($user->conn)) continue;
 
             if($user->conn->resourceId == $conn->resourceId)
                         $email = $user->email;
         }
-
+//        echo "2\n";
         return $email;
     }
     public static function getFriendForArr($friendOrigin){

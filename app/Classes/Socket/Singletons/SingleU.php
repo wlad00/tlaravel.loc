@@ -63,11 +63,19 @@ class SingleU{
 
         $arrPersons = [];
 
+
         foreach($this->MapUsers as $email=>$user){
 
-            if(!$user->block)
-                array_push($arrPersons,$user);
+            if(!$user->block){
+
+                $person = clone $user;
+                unset($person->conn);
+
+                array_push($arrPersons,$person);
+            }
         }
+
+        ChatService::echo_arr($this->MapUsers,'/MapUsers----');
 
         $this->arrPersons = $arrPersons;
     }
@@ -133,40 +141,38 @@ class SingleU{
 
 
 
-    public function responseAdmin(){
+    /*public function notifyAdmin(){
 
-        $data = ['MapUsers'=>$this->MapUsers,
+        if(!isset($this->admin))
+                            return;
+
+        $ArrBots = [];
+
+        foreach($this->MapUsers as $user){
+
+            $clone_user = clone $user;
+            unset($clone_user->conn);
+            array_push($ArrBots,$clone_user);
+        }
+
+
+        $data = [
+
+            'ArrBots'=>$ArrBots,
             'type'=>'response_admin'];
 
         $json = json_encode($data,JSON_UNESCAPED_UNICODE);
 
         $this->admin->conn->send( $json);
-    }
-
-
-
-    /**
-     * @throws \Exception
-     */
-    /*public function makeArrPersons(){
-
-//        echo "000\n";
-
-//        $singleU = self::getInstance();
-//
-//        $singleP = SingleP::getInstance();
-
-
-//        echo "1\n";
-
-        $singleP->setArrUsers($singleU->MapUsers);
-
-//        echo "2\n";
-
-        $singleU->arrPersons = $singleP->getArrPersons();
-
-//        ChatService::echo_arr($singleU->arrPersons->toArray(),'arrPersons');
     }*/
+
+    public function removeAllBots(){
+
+
+        $this->MapUsers = array_filter($this->MapUsers, function($user) {
+            return !is_numeric($user->email);
+        });
+    }
 
     /**
      * @param $Msg
